@@ -1,0 +1,246 @@
+##
+## This is part of 4 files. Make sure you have the whole set
+##    tft-office.yaml        https://gist.github.com/kdorff/363cc20a26fddf7a3dea6fabbcd04805
+##    display-panel.h        https://gist.github.com/kdorff/5c26fb21c573e4309da2587aa6e9b5d3
+##    display-touch-panel.h  https://gist.github.com/kdorff/78d45057ee7a1aaf92f839f576c99e0b
+##    tft-room-time-temp.h   https://gist.github.com/kdorff/811f86b33bf8b63050dce7e91d70cac8
+##
+
+##
+## I'm testing connecting the ESP32 to the 2.8" ili9341 TFT
+## SPI display (320x240) which contains a xpt2046 touchscreen
+## for use within ESPHome and Home Assistant.
+## At this time, I'm not tring to support the SD card.
+##
+## Link to tested product https://www.amazon.com/gp/product/B09XHJ9KRX
+##
+## Wiring
+## --------
+## The SPI pins, MOSI, MISO, and SCK, are shared between the display
+## and the touchscreen (and SD card reader). TOUCH_IRQ is optional.
+## If you don't wire it, make sure you comment out 
+## touchscreen.interrupt_pin. The SD card pins are not connected.
+## -- These may not be optimum wiring, but I've tested them.
+##
+## LCD to ESP32 (30 pin or d1 mini) wiring:
+## * SCK/CLK to 18
+## * MISO/DO/SDO to 19
+## * MOSI/DIN/SDI to 23
+## * DISP_CS to 33
+## * DISP_LED to 17
+## * TOUCH_CS to 32
+## * DISP_DC to 5
+## * DISP_RESET to 16
+## * TOUCH_IRQ 21
+## * VCC to 3V3
+## * GND to GND
+##
+
+esphome:
+  name: tft-office
+  includes:
+    - display-panel.h
+    - display-touch-panel.h
+    - tft-room-time-temp.h
+
+esp32:
+  board: esp32dev
+  framework:
+    type: arduino
+
+# Enable Home Assistant API
+api:
+  encryption:
+    key: !secret tft_test1_api_encryption
+
+ota:
+  password: !secret ota_password
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+  fast_connect: true
+  domain: .mylocal
+  manual_ip:
+    static_ip: 192.168.1.181
+    gateway: 192.168.1.1
+    subnet: 255.255.255.0
+
+  # Enable fallback hotspot (captive portal) in case wifi connection fails
+  ap:
+    ssid: "tft-office Fallback Hotspot"
+    password: !secret fallback_wifi_password
+
+captive_portal:
+
+# It appears there isn't enough RAM on the ESP32 to run the
+# ili9341 and bluetooth_proxy at the same time. Even if I disable
+# logger and captive_portal there doesn't seem to be enough RAM.
+# bluetooth_proxy:
+#  active: true
+
+# Enable logging
+logger:
+
+color:
+  - id: color_text_white
+    red: 100%
+    green: 100%
+    blue: 100%
+
+font:
+  - file: 'fonts/materialdesignicons-webfont.ttf'
+    id: icon_font_45
+    size: 45
+    glyphs: [
+      "󰃠", # bright down
+      "󰃞", # bright up
+      "󰀠"  # alarm
+    ]
+  - file: "gfonts://Rubik@700"
+    id: font_time
+    size: 110
+  - file: "gfonts://Rubik@700"
+    id: font_alarm
+    size: 40
+  - file: "gfonts://Rubik@700"
+    id: font_day
+    size: 28
+  - file: "gfonts://Rubik@700"
+    id: font_date
+    size: 40
+  - file: "gfonts://Rubik@500"
+    id: font_temp_label
+    size: 20
+  - file: "gfonts://Rubik@700"
+    id: font_temp
+    size: 45
+  - file: "gfonts://Rubik@800"
+    id: font_cont
+    size: 45
+  - file: "gfonts://Rubik@600"
+    id: font_flash
+    size: 30
+
+spi:
+  clk_pin: 18
+  mosi_pin: 23
+  miso_pin: 19
+
+globals:
+  - id: brightness
+    type: float
+    restore_value: yes
+    initial_value: "1.0"
+
+display:
+  - platform: ili9341
+    model: TFT 2.4
+    cs_pin: 33
+    dc_pin: 5
+    reset_pin: 16
+    rotation: 270
+    ## The panels will redraw themselves completely.
+    auto_clear_enabled: True
+    update_interval: 0.1s
+    lambda: |-
+      static bool panelsInitialized = 0;
+      if (!panelsInitialized) {
+        initializePanels(it);
+        panelsInitialized = 1;
+      }
+
+      updatePanelStates(it);
+      drawPanels(it);
+
+touchscreen:
+  ##
+  ## This is likely more responsive if I add T_IRQ
+  ##
+  platform: xpt2046
+  id: touch
+  cs_pin: 32
+  interrupt_pin: 21
+  swap_x_y: false
+  ##
+  ## From running calibration (code is commented out, below)
+  ## for rotation: 0 these were good
+  ## minx=426, maxx=3771, miny=471, maxy=3845
+  calibration_x_min: 426
+  calibration_x_max: 3771
+  calibration_y_min: 3845
+  calibration_y_max: 471
+  on_touch:
+    then:
+      - if:
+          condition:
+            lambda: |-
+              return contUpPanel.isTouchOnPanel(id(touch));
+          then:
+            - lambda: |-
+                // Increase brightness 5%
+                id(brightness) = id(brightness) + 0.01 > 1 ? 1.0 : id(brightness) + 0.01;
+                id(backlight).set_level(id(brightness));
+                sprintf(buffer, "Increased to %.0f%%", id(brightness)*100);
+                enableFlash({"Brightness", buffer});
+      - if:
+          condition:
+            lambda: |-
+              return contDownPanel.isTouchOnPanel(id(touch));
+          then:
+            - lambda: |-
+                // Decrease brightness 5%
+                id(brightness) = id(brightness) - 0.01 < 0 ? 0.0 : id(brightness) - 0.01;
+                id(backlight).set_level(id(brightness));
+                sprintf(buffer, "Decreased to %.0f%%", id(brightness)*100);
+                enableFlash({"Brightness", buffer});
+
+# Define a PWM output on the ESP32
+output:
+  - platform: ledc
+    pin: 17
+    id: backlight
+
+sensor:
+  ##
+  ## HA sensors we need to do our work.
+  ##
+  - platform: homeassistant
+    id: back_yard_temperature
+    entity_id: sensor.back_yard_sensor_temperature
+  - platform: homeassistant
+    id: inside_temperature
+    entity_id: sensor.office_sensor_temperature
+  ##
+  ## For debugging
+  ##
+  # - platform: debug
+  #   free:
+  #     name: "Heap Free"
+  #   # fragmentation:
+  #   #   name: "Heap Fragmentation"
+  #   block:
+  #     name: "Heap Max Block"
+  #   loop_time:
+  #     name: "Loop Time"
+
+text_sensor:
+  - platform: homeassistant
+    id: next_alarm
+    entity_id: sensor.kitchen_den_next_alarm_str
+  ##
+  ## For debugging
+  ##
+  # - platform: debug
+  #   device:
+  #     name: "Device Info"
+
+time:
+  - platform: homeassistant
+    id: esptime
+
+##
+## For debugging
+##
+# debug:
+#   update_interval: 5s
