@@ -1,11 +1,3 @@
-//
-// This is part of 4 files. Make sure you have the whole set
-//    tft-office.yaml        https://gist.github.com/kdorff/363cc20a26fddf7a3dea6fabbcd04805
-//    display-panel.h        https://gist.github.com/kdorff/5c26fb21c573e4309da2587aa6e9b5d3
-//    display-touch-panel.h  https://gist.github.com/kdorff/78d45057ee7a1aaf92f839f576c99e0b
-//    tft-room-time-temp.h   https://gist.github.com/kdorff/811f86b33bf8b63050dce7e91d70cac8
-//
-
 // For sprintf calls.
 char buffer[25];
 
