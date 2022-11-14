@@ -1,8 +1,10 @@
 #include "esphome.h"
 #include <vector>
 
-// A rectangular Panel to be displayed on the LCD that we can 
+// A rectangular panel to be displayed on the LCD that we can 
 // write one or more lines of centered text to.
+// One can also determine if a DisplayPanel is in the 
+// range of a touch coordinates.
 class DisplayPanel {
     public:
         // Position of the panel
@@ -12,6 +14,10 @@ class DisplayPanel {
         // Size of the panel
         unsigned int w;
         unsigned int h;
+
+        // Calculated maximum x and y values. Use for touch in isTouchOnPanel()
+        unsigned int max_x;
+        unsigned int max_y;
 
         bool enabled = true;
 
@@ -46,6 +52,8 @@ class DisplayPanel {
             y = _y;
             w = _w;
             h = _h;
+            max_x = _x + _w;
+            max_y = _y + _h;
         }
 
         void draw(esphome::display::DisplayBuffer &display) {
@@ -62,6 +70,13 @@ class DisplayPanel {
             }
         }
 
+        // See the touched x,y location is in the range of the Panel.
+        bool isTouchOnPanel(int tpX, int tpY) {
+            bool found =
+                (tpX >= x && tpX <= max_x) && 
+                (tpY >= y && tpY <= max_y);
+            return found;
+        }
     protected:
         // Draw the Panel in the specified location
         // at the specified color.
@@ -127,4 +142,3 @@ class DisplayPanel {
                 font, textColor, TextAlign::CENTER, text);
         }
 };
-

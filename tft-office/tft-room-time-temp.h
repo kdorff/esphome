@@ -10,30 +10,26 @@ char buffer[25];
 
 // Size information about the panels
 // Size for PW(x), PH(x) are percentages, 0-100.
-#define TIME_WIDTH PW(100)
-#define TIME_HEIGHT PH(50)
-#define ALARM_WIDTH PW(100)
-#define ALARM_HEIGHT PH(20)
-
-#define DAY_WIDTH PW(50)
-#define DAY_HEIGHT PH(17)
-#define DATE_WIDTH PW(50)
-#define DATE_HEIGHT PH(18)
-
 #define CONT_WIDTH PW(15)
-#define CONT_HEIGHT PH(20)
+#define CONT_HEIGHT PH(25)
 
-#define TEMP_LABEL_WIDTH PW(25)
+#define DAY_WIDTH PW(70)
+#define DAY_HEIGHT PH(13)
+#define DATE_WIDTH PW(70)
+#define DATE_HEIGHT PH(12)
+
+#define TIME_WIDTH PW(100)
+#define TIME_HEIGHT PH(40)
+
+#define TEMP_WIDTH PW(50)
+#define TEMP_HEIGHT PH(27)
+#define TEMP_LABEL_WIDTH PW(50)
 #define TEMP_LABEL_HEIGHT PH(8)
-#define TEMP_WIDTH TEMP_LABEL_WIDTH
-#define TEMP_HEIGHT PH(22)
 
 #define FLASH_WIDTH PW(90)
 #define FLASH_HEIGHT PH(50)
 #define FLASH_X PW(5)
 #define FLASH_Y PH(20)
-
-#define TOTAL_WIDTH (TIME_WIDTH + TEMP_WIDTH)
 
 //
 // TODO: Anything we can to to simplify touch?
@@ -41,19 +37,17 @@ char buffer[25];
 //
 
 // The Panels used by this app
-DisplayPanel timePanel(0, 0, TIME_WIDTH, TIME_HEIGHT);
-DisplayPanel alarmPanel(0, TIME_HEIGHT, ALARM_WIDTH, ALARM_HEIGHT);
+DisplayPanel contDownPanel(0, 0, CONT_WIDTH, CONT_HEIGHT);
+DisplayPanel datePanel(CONT_WIDTH, 0, DATE_WIDTH, DATE_HEIGHT);
+DisplayPanel dayPanel(CONT_WIDTH, DATE_HEIGHT, DAY_WIDTH, DAY_HEIGHT);
+DisplayPanel contUpPanel(PW(85), 0, CONT_WIDTH, CONT_HEIGHT);
 
-DisplayTouchPanel contDownPanel(0, 0, CONT_WIDTH, CONT_HEIGHT);
-DisplayTouchPanel contUpPanel(PW(85), 0, CONT_WIDTH, CONT_HEIGHT);
+DisplayPanel timePanel(0, CONT_HEIGHT, TIME_WIDTH, TIME_HEIGHT);
 
-DisplayPanel dayPanel(TEMP_WIDTH, TIME_HEIGHT + ALARM_HEIGHT, DAY_WIDTH, DAY_HEIGHT);
-DisplayPanel datePanel(TEMP_WIDTH, TIME_HEIGHT + ALARM_HEIGHT + DAY_HEIGHT, DATE_WIDTH, DATE_HEIGHT);
-
-DisplayPanel insideTempPanel(0, TIME_HEIGHT + ALARM_HEIGHT, TEMP_WIDTH, TEMP_HEIGHT);
-DisplayPanel insideLabelPanel(0, PH(92), TEMP_LABEL_WIDTH, TEMP_LABEL_HEIGHT);
-DisplayPanel outdoorTempPanel(TEMP_WIDTH + DATE_WIDTH, TIME_HEIGHT + ALARM_HEIGHT, TEMP_WIDTH, TEMP_HEIGHT);
-DisplayPanel outdoorLabelPanel(TEMP_WIDTH + DATE_WIDTH, PH(92), TEMP_LABEL_WIDTH, TEMP_LABEL_HEIGHT);
+DisplayPanel insideTempPanel(0, CONT_HEIGHT + TIME_HEIGHT, TEMP_WIDTH, TEMP_HEIGHT);
+DisplayPanel insideLabelPanel(0, CONT_HEIGHT + TIME_HEIGHT +  TEMP_HEIGHT, TEMP_LABEL_WIDTH, TEMP_LABEL_HEIGHT);
+DisplayPanel outdoorTempPanel(TEMP_WIDTH, CONT_HEIGHT + TIME_HEIGHT, TEMP_WIDTH, TEMP_HEIGHT);
+DisplayPanel outdoorLabelPanel(TEMP_WIDTH, CONT_HEIGHT + TIME_HEIGHT +  TEMP_HEIGHT, TEMP_LABEL_WIDTH, TEMP_LABEL_HEIGHT);
 
 DisplayPanel flashPanel(FLASH_X, FLASH_Y, FLASH_WIDTH, FLASH_HEIGHT);
 
@@ -71,11 +65,7 @@ void initializePanels(esphome::display::DisplayBuffer &display) {
     timePanel.font = font_time;
     timePanel.color = Color::BLACK;
     timePanel.textColor = color_text_white;
-    timePanel.fontVertOffset = 45;
-
-    alarmPanel.font = font_alarm;
-    alarmPanel.color = Color::BLACK;
-    alarmPanel.textColor = color_text_white;
+    timePanel.fontVertOffset = 8;
 
     dayPanel.font = font_day;
     dayPanel.color = Color::BLACK;
@@ -84,7 +74,6 @@ void initializePanels(esphome::display::DisplayBuffer &display) {
     datePanel.font = font_date;
     datePanel.color = Color::BLACK;
     datePanel.textColor = color_text_white;
-    datePanel.fontVertOffset = -7;
 
     contUpPanel.font = icon_font_45;
     contUpPanel.color = Color::BLACK;
@@ -96,23 +85,25 @@ void initializePanels(esphome::display::DisplayBuffer &display) {
     contDownPanel.textColor = color_text_white;
     contDownPanel.text = contDownText;
 
+    insideTempPanel.font = font_temp;
+    insideTempPanel.color = Color::BLACK;
+    insideTempPanel.textColor = color_text_white;
+    insideTempPanel.fontVertOffset = 6;
+
     insideLabelPanel.font = font_temp_label;
     insideLabelPanel.color = Color::BLACK;
     insideLabelPanel.textColor = color_text_white;
     insideLabelPanel.text = insideLabelText;
 
-    insideTempPanel.font = font_temp;
-    insideTempPanel.color = Color::BLACK;
-    insideTempPanel.textColor = color_text_white;
+    outdoorTempPanel.font = font_temp;
+    outdoorTempPanel.color = Color::BLACK;
+    outdoorTempPanel.textColor = color_text_white;
+    outdoorTempPanel.fontVertOffset = 6;
 
     outdoorLabelPanel.font = font_temp_label;
     outdoorLabelPanel.color = Color::BLACK;
     outdoorLabelPanel.textColor = color_text_white;
     outdoorLabelPanel.text = outdoorLabelText;
-
-    outdoorTempPanel.font = font_temp;
-    outdoorTempPanel.color = Color::BLACK;
-    outdoorTempPanel.textColor = color_text_white;
 
     flashPanel.font = font_flash;
     flashPanel.color = Color::BLACK;
@@ -148,17 +139,6 @@ void updatePanelStates(esphome::display::DisplayBuffer &display) {
     sprintf(buffer, "%d:%02d", hour, minute);
     std::vector<std::string> timeText = { buffer };
     timePanel.text = timeText;
-
-    // Next alarm in room
-    // if (next_alarm->has_state() && next_alarm->state != "unavailable") {
-    //     sprintf(buffer, "%s", next_alarm->state.c_str());
-    //     std::vector<std::string> alarmText = { buffer };
-    //     alarmPanel.text = alarmText;
-    //     // ESP_LOGD("update", "next_alarm=%s", next_alarm->state.c_str());
-    // }
-    // else {
-        alarmPanel.text = blankText;
-    // }
 
     // Day of the week
     std::string dayName = now.strftime("%A");
@@ -206,16 +186,15 @@ void updatePanelStates(esphome::display::DisplayBuffer &display) {
 void drawPanels(esphome::display::DisplayBuffer &display) {
     // drawAllPanels is generally preferred
     DisplayPanel::drawAllPanels(display, {
-        timePanel,
-        alarmPanel,
+        contDownPanel,
         datePanel,
         dayPanel,
-        insideLabelPanel,
+        contUpPanel,
+        timePanel,
         insideTempPanel,
+        insideLabelPanel,
         outdoorLabelPanel,
-        outdoorTempPanel,
-        contDownPanel,
-        contUpPanel
+        outdoorTempPanel
     });
     // But draw flashPanel separately so it over-draws
     // what is below it.
