@@ -29,7 +29,7 @@ wifi:
   ssid: !secret wifi_ssid
   password: !secret wifi_password
   fast_connect: true
-  
+
   # Enable fallback hotspot (captive portal) in case wifi connection fails
   ap:
     ssid: "guest-time-temp Fallback Hotspot"
@@ -55,15 +55,15 @@ font:
   - file: "gfonts://Rubik@700"
     id: font_time
     size: 34
-  - file: "gfonts://Rubik@500"
+  - file: "gfonts://Rubik@700"
     id: font_alarm
     size: 12
   - file: "gfonts://Rubik@700"
     id: font_date
     size: 16
-  - file: "gfonts://Rubik@600"
+  - file: "gfonts://Rubik@700"
     id: font_temp
-    size: 17
+    size: 22
   - file: "gfonts://Rubik@500"
     id: font_temp_label
     size: 10
