@@ -35,8 +35,9 @@
 esphome:
   name: tft-office
   includes:
-    - display-panel.h
     - tft-room-time-temp.h
+  libraries:
+    esphome-display-panel=https://github.com/kdorff/esphome-display-panel.git#v0.0.1
 
 esp32:
   board: esp32dev

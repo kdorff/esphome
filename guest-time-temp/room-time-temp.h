@@ -1,3 +1,5 @@
+#include <display-panel.h>
+
 // For sprintf calls.
 char buffer[25];
 

@@ -5,14 +5,14 @@
 esphome:
   name: guest-time-temp-esp32
   includes:
-    - display-panel.h
     - room-time-temp.h
+  libraries:
+    esphome-display-panel=https://github.com/kdorff/esphome-display-panel.git#v0.0.1
 
 esp32:
   board: esp32dev
   framework:
     type: arduino
-
 
 # Enable logging
 logger:
@@ -29,6 +29,11 @@ wifi:
   ssid: !secret wifi_ssid
   password: !secret wifi_password
   fast_connect: true
+  domain: .mylocal
+  manual_ip:
+    static_ip: 192.168.1.179
+    gateway: 192.168.1.1
+    subnet: 255.255.255.0
 
   # Enable fallback hotspot (captive portal) in case wifi connection fails
   ap:
