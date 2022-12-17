@@ -86,14 +86,14 @@ sensor:
     dout_pin: 16
     clk_pin: 17
     gain: 128
-    update_interval: 20s
+    update_interval: 1s
     internal: true
   - name: "Cat Water %"
     id: cat_water_percentage
     platform: template
     device_class: "weight"
     unit_of_measurement: "%"
-    update_interval: 5s
+    update_interval: 1s
     accuracy_decimals: 0
     lambda: |-
       static float minWeight = -525710;
