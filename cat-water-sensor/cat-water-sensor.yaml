@@ -1,5 +1,9 @@
 esphome:
   name: cat-water-sensor
+  includes:
+    - cat-water-sensor.h
+  libraries:
+    esphome-display-panel=https://github.com/kdorff/esphome-display-panel.git#v0.0.1
 
 esp32:
   board: esp32dev
@@ -29,8 +33,51 @@ wifi:
 
 captive_portal:
 
-bluetooth_proxy:
-  active: true
+i2c:
+  frequency: 800kHz
+
+font:
+  - file: "gfonts://Rubik@700"
+    id: font_time
+    size: 34
+  - file: "gfonts://Rubik@700"
+    id: font_alarm
+    size: 12
+  - file: "gfonts://Rubik@700"
+    id: font_date
+    size: 16
+  - file: "gfonts://Rubik@500"
+    id: font_water
+    size: 16
+
+display:
+  - platform: ssd1306_i2c
+    model: "SSD1306 128x64"
+    address: 0x3C
+    update_interval: 1s
+    contrast: 1%
+    lambda: |-
+      static bool panelsInitialized = 0;
+      if (!panelsInitialized) {
+        initializePanels(it);
+        panelsInitialized = 1;
+      }
+
+      updatePanelStates(it);
+      drawPanels(it);
+
+time:
+  - platform: homeassistant
+    id: esptime
+    on_time_sync:
+      then:
+        - lambda: !lambda |-
+            if (!id(boot_time).has_state()) {
+              auto now = id(esptime).now();
+              char buffer[20];
+              now.strftime(buffer, sizeof(buffer), "%Y-%m-%dT%H:%M:%S");
+              id(boot_time).publish_state(buffer);
+            }
 
 sensor:
   - platform: hx711
@@ -39,7 +86,7 @@ sensor:
     dout_pin: 16
     clk_pin: 17
     gain: 128
-    update_interval: 1s
+    update_interval: 20s
     internal: true
   - name: "Cat Water %"
     id: cat_water_percentage
@@ -49,14 +96,14 @@ sensor:
     update_interval: 5s
     accuracy_decimals: 0
     lambda: |-
-      static float minWeight = -525800;
-      static float maxWeight = -558800;
+      static float minWeight = -525710;
+      static float maxWeight = -553840;
       static int lastPercent = -1;
       if (id(cat_water_weight).has_state()) {
         float currentWeight = id(cat_water_weight).state;
         int newPercent = (int) (((currentWeight - minWeight) / (maxWeight - minWeight)) * 100);
-        ESP_LOGI("template", "calc percent min=%f current=%f max=%f, percent=%d", minWeight, currentWeight, maxWeight, newPercent);
         if (newPercent != lastPercent) {
+          ESP_LOGI("template", "calc percent min=%f current=%f max=%f, percent=%d", minWeight, currentWeight, maxWeight, newPercent);
           lastPercent = newPercent;
           return (float) newPercent;
         }
@@ -69,4 +116,12 @@ sensor:
         return {};
       }
 
+text_sensor:
+  - platform: homeassistant
+    id: next_alarm
+    entity_id: sensor.kitchen_den_next_alarm_str
+  - platform: template
+    name: "cat-water-sensor Boot Time"
+    id: boot_time
+    icon: mdi:clock-start
 
