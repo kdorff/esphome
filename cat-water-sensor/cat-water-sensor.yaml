@@ -1,0 +1,72 @@
+esphome:
+  name: cat-water-sensor
+
+esp32:
+  board: esp32dev
+  framework:
+    type: arduino
+
+# Enable logging
+logger:
+
+# Enable Home Assistant API
+api:
+  encryption:
+    key: !secret cat_water_api_encryption
+
+ota:
+  password: !secret ota_password
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+  fast_connect: true
+
+  # Enable fallback hotspot (captive portal) in case wifi connection fails
+  ap:
+    ssid: "cat-water Fallback Hotspot"
+    password: !secret fallback_wifi_password
+
+captive_portal:
+
+bluetooth_proxy:
+  active: true
+
+sensor:
+  - platform: hx711
+    name: "Cat Water Weight"
+    id: cat_water_weight
+    dout_pin: 16
+    clk_pin: 17
+    gain: 128
+    update_interval: 1s
+    internal: true
+  - name: "Cat Water %"
+    id: cat_water_percentage
+    platform: template
+    device_class: "weight"
+    unit_of_measurement: "%"
+    update_interval: 5s
+    accuracy_decimals: 0
+    lambda: |-
+      static float minWeight = -525800;
+      static float maxWeight = -558800;
+      static int lastPercent = -1;
+      if (id(cat_water_weight).has_state()) {
+        float currentWeight = id(cat_water_weight).state;
+        int newPercent = (int) (((currentWeight - minWeight) / (maxWeight - minWeight)) * 100);
+        ESP_LOGI("template", "calc percent min=%f current=%f max=%f, percent=%d", minWeight, currentWeight, maxWeight, newPercent);
+        if (newPercent != lastPercent) {
+          lastPercent = newPercent;
+          return (float) newPercent;
+        }
+        else {
+          // No change in percentage
+          return {};
+        }
+      } else {
+        // No state from the load cells
+        return {};
+      }
+
+
