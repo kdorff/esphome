@@ -113,4 +113,3 @@ void updatePanelStates(esphome::display::DisplayBuffer &display) {
         waterPercentPanel.enabled = false;
     }
 }
-

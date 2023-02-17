@@ -2,6 +2,7 @@ esphome:
   name: cat-water-sensor
   includes:
     - cat-water-sensor.h
+    - FIR.h
   libraries:
     esphome-display-panel=https://github.com/kdorff/esphome-display-panel.git#v0.0.1
 
@@ -91,7 +92,7 @@ sensor:
   - name: "Cat Water %"
     id: cat_water_percentage
     platform: template
-    device_class: "weight"
+    device_class: "moisture"
     unit_of_measurement: "%"
     update_interval: 1s
     accuracy_decimals: 0
@@ -99,16 +100,29 @@ sensor:
       static float minWeight = -525710;
       static float maxWeight = -553840;
       static int lastPercent = -1;
+      static bool firInitialized = false;
       if (id(cat_water_weight).has_state()) {
+        if (!firInitialized) {
+          initFIR();
+          firInitialized = true;
+        }
+
         float currentWeight = id(cat_water_weight).state;
         int newPercent = (int) (((currentWeight - minWeight) / (maxWeight - minWeight)) * 100);
-        if (newPercent != lastPercent) {
-          ESP_LOGI("template", "calc percent min=%f current=%f max=%f, percent=%d", minWeight, currentWeight, maxWeight, newPercent);
-          lastPercent = newPercent;
-          return (float) newPercent;
+        if (newPercent <= 0) {
+          // Ignore 0 and negative values.
+          return {};
+        }
+
+        int correctedPercent = observeSample(newPercent);
+        if (correctedPercent != lastPercent) {
+          ESP_LOGI("template", "Change min=%f current=%f max=%f, lastPercent=%d, newPercent=%d, correctedPercent=%d", minWeight, currentWeight, maxWeight, lastPercent, newPercent, correctedPercent);
+          lastPercent = correctedPercent;
+          return (float) correctedPercent;
         }
         else {
           // No change in percentage
+          ESP_LOGI("template", "NO CHANGE min=%f current=%f max=%f, lastPercent=%d, newPercent=%d, correctedPercent=%d", minWeight, currentWeight, maxWeight, lastPercent, newPercent, correctedPercent);
           return {};
         }
       } else {
@@ -124,4 +138,3 @@ text_sensor:
     name: "cat-water-sensor Boot Time"
     id: boot_time
     icon: mdi:clock-start
-
