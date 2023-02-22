@@ -1,0 +1,247 @@
+##
+## See README.md
+##
+
+esphome:
+  name: tft-back-door
+  includes:
+    - tft-door-monitor.h
+  libraries:
+    - esphome-display-panel=https://github.com/kdorff/esphome-display-panel.git#v0.0.2
+
+esp32:
+  board: esp32dev
+  framework:
+    type: arduino
+
+# Enable logging
+logger:
+
+# Enable Home Assistant API
+api:
+  encryption:
+    key: !secret tft_test1_api_encryption
+
+ota:
+  password: !secret ota_password
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+  fast_connect: true
+
+  # Enable fallback hotspot (captive portal) in case wifi connection fails
+  ap:
+    ssid: "tft-back-door Fallback Hotspot"
+    password: !secret fallback_wifi_password
+
+# captive_portal:
+
+color:
+  - id: color_red
+    red: 100%
+    green: 0%
+    blue: 0%
+  - id: color_green
+    red: 0%
+    green: 100%
+    blue: 0%
+  - id: color_blue
+    red: 0%
+    green: 0%
+    blue: 100%
+  - id: color_yellow
+    red: 100%
+    green: 100%
+    blue: 0%
+  - id: color_orange
+    red: 100%
+    green: 65%
+    blue: 0%
+
+font:
+  - file: "gfonts://Rubik@800"
+    id: font_door
+    size: 36
+  - file: "gfonts://Rubik@900"
+    id: font_time
+    size: 60
+  - file: "gfonts://Rubik@600"
+    id: font_temp
+    size: 60
+  - file: "gfonts://Rubik@800"
+    id: font_brightness
+    size: 30
+
+spi:
+  clk_pin: 18
+  mosi_pin: 23
+  miso_pin: 19
+
+
+globals:
+  - id: brightness
+    type: float
+    restore_value: yes
+    initial_value: "1.0"
+
+display:
+  - platform: ili9341
+    model: TFT 2.4
+    cs_pin: 33
+    dc_pin: 5
+    reset_pin: 16
+    rotation: 270
+    ## The panels will redraw themselves completely.
+    auto_clear_enabled: False
+    update_interval: 0.1s
+    lambda: |-
+      static bool panelsInitialized = 0;
+      if (!panelsInitialized) {
+        initializePanels(it);
+        panelsInitialized = 1;
+      }
+
+      updatePanelStates(it);
+      drawPanels(it);
+      
+# Define a PWM output on the ESP32
+output:
+  - platform: ledc
+    pin: 17
+    id: backlight
+
+touchscreen:
+  ##
+  ## This is likely more responsive if I add T_IRQ
+  ##
+  platform: xpt2046
+  id: touch
+  cs_pin: 32
+  interrupt_pin: 21
+  swap_x_y: false
+  ##
+  ## From running calibration (code is commented out, below)
+  ## for rotation: 0 these were good
+  ## minx=426, maxx=3771, miny=471, maxy=3845
+  calibration_x_min: 426
+  calibration_x_max: 3771
+  calibration_y_min: 3845
+  calibration_y_max: 471
+  ## Help eliminate phantom presses
+  threshold: 400
+  update_interval: 50ms
+  report_interval: 1s
+  on_touch:
+    then:
+      - if:
+          condition:
+            lambda: |-
+              return backDoorPanel.isTouchOnPanel((id(touch)).x, (id(touch)).y);
+          then:
+            - if:
+                condition:
+                    - binary_sensor.is_on: back_door_autolock
+                then:
+                  - logger.log: "Back door autolock disabled"
+                  - homeassistant.service:
+                      ##
+                      ## I thought changing ESPHome's binary_sensor.back_door_autolock
+                      ## should have changed the associated input_boolean.keymaster_back_door_autolock
+                      ## but it didn't seem to. Calling the HA service to change the value worked.
+                      ##
+                      service: "input_boolean.turn_off"
+                      data:
+                        entity_id: "input_boolean.keymaster_back_door_autolock"
+                else:
+                  - logger.log: "Back door autolock enabled"
+                  - homeassistant.service:
+                      service: "input_boolean.turn_on"
+                      data:
+                        entity_id: "input_boolean.keymaster_back_door_autolock"
+      - if:
+          condition:
+            lambda: |-
+              return frontDoorPanel.isTouchOnPanel((id(touch)).x, (id(touch)).y);
+          then:
+            - if:
+                condition:
+                  - binary_sensor.is_on: front_door_autolock
+                then:
+                  - logger.log: "Front door autolock disabled"
+                  - homeassistant.service:
+                      service: "input_boolean.turn_off"
+                      data:
+                        entity_id: "input_boolean.keymaster_front_door_autolock"
+                else:
+                  - logger.log: "Front door autolock enabled"
+                  - homeassistant.service:
+                      service: "input_boolean.turn_on"
+                      data:
+                        entity_id: "input_boolean.keymaster_front_door_autolock"
+      - if:
+          condition:
+            lambda: |-
+              return brightnessUpPanel.isTouchOnPanel((id(touch)).x, (id(touch)).y);
+          then:
+            - lambda: |-
+                // Increase brightness 10%
+                id(brightness) = id(brightness) + 0.1 > 1 ? 1.0 : id(brightness) + 0.1;
+                id(backlight).set_level(id(brightness));
+      - if:
+          condition:
+            lambda: |-
+              return brightnessDownPanel.isTouchOnPanel((id(touch)).x, (id(touch)).y);
+          then:
+            - lambda: |-
+                // Decrease brightness 10%
+                id(brightness) = id(brightness) - 0.1 < 0 ? 0.0 : id(brightness) - 0.1;
+                id(backlight).set_level(id(brightness));
+
+time:
+  - platform: homeassistant
+    id: esptime
+    on_time_sync:
+      then:
+        - lambda: !lambda |-
+            if (!id(tft_back_door_boot_time).has_state()) {
+              auto now = id(esptime).now();
+              char buffer[20];
+              now.strftime(buffer, sizeof(buffer), "%Y-%m-%dT%H:%M:%S");
+              id(tft_back_door_boot_time).publish_state(buffer);
+            }
+
+text_sensor:
+  - platform: template
+    name: "tft-back-door Boot Time"
+    id: tft_back_door_boot_time
+    icon: mdi:clock-start
+
+sensor:
+  ##
+  ## HA sensors we need to do our work.
+  ##
+  - platform: homeassistant
+    id: back_yard_temperature
+    entity_id: sensor.back_yard_sensor_temperature
+
+binary_sensor:
+  ##
+  ## More HA sensors we need to do our work.
+  ##
+  - platform: homeassistant
+    id: back_door_autolock
+    entity_id: input_boolean.keymaster_back_door_autolock
+    publish_initial_state: true
+  - platform: homeassistant
+    id: front_door_autolock
+    entity_id: input_boolean.keymaster_front_door_autolock
+    publish_initial_state: true
+  - platform: homeassistant
+    id: back_door_sensor
+    entity_id: binary_sensor.back_door_sensor
+    publish_initial_state: true
+  - platform: homeassistant
+    id: front_door_sensor
+    entity_id: binary_sensor.front_door_sensor
+    publish_initial_state: true
