@@ -1,4 +1,4 @@
-##Overview##
+## Overview ##
 
 I'm testing connecting the ESP32 to the 2.8" ili9341 TFT
 SPI display (320x240) which contains a xpt2046 touchscreen
@@ -7,7 +7,7 @@ At this time, I'm not tring to support the SD card.
 
 Link to tested product https://www.amazon.com/gp/product/B09XHJ9KRX
 
-##Wiring##
+## Wiring ##
 
 The SPI pins, MOSI, MISO, and SCK, are shared between the 
 display and the touchscreen (and SD card reader). TOUCH_IRQ
