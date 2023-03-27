@@ -99,14 +99,27 @@ sensor:
   - platform: homeassistant
     id: inside_temperature
     entity_id: sensor.guest_bedroom_ecobee_sensor_temperature
+
 text_sensor:
   - platform: homeassistant
     id: next_alarm
     entity_id: sensor.guest_bedroom_next_alarm_str
+  - platform: template
+    name: "guest-time-temp-esp32 Boot Time"
+    id: guest_time_temp_esp32_boot_time
+    icon: mdi:clock-start
 
 time:
-  ##
-  ## HA is our time source.
-  ##
   - platform: homeassistant
     id: esptime
+    on_time_sync:
+      then:
+        - lambda: !lambda |-
+            static boolean bootTimeSet = false;
+            if (!bootTimeSet) {
+              auto now = id(esptime).now();
+              char buffer[20];
+              now.strftime(buffer, sizeof(buffer), "%Y-%m-%dT%H:%M:%S");
+              id(guest_time_temp_esp32_boot_time).publish_state(buffer);
+              bootTimeSet = true;
+            }

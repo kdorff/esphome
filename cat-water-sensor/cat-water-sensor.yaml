@@ -76,11 +76,13 @@ time:
     on_time_sync:
       then:
         - lambda: !lambda |-
-            if (!id(boot_time).has_state()) {
+            static boolean bootTimeSet = false;
+            if (!bootTimeSet) {
               auto now = id(esptime).now();
               char buffer[20];
               now.strftime(buffer, sizeof(buffer), "%Y-%m-%dT%H:%M:%S");
               id(boot_time).publish_state(buffer);
+              bootTimeSet = true;
             }
 
 sensor:

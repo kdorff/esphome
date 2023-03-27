@@ -1,5 +1,5 @@
 #define NUM_FIR_TAPS 10
-#define RECENT_MIN_WINDOW 1
+#define RECENT_MIN_WINDOW 2
 
 //
 // This code implements a Moving Average Finite

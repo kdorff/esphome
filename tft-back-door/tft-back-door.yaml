@@ -86,7 +86,7 @@ globals:
     initial_value: "1.0"
 
 display:
-  - platform: ili9341
+  - platform: ili9xxx
     model: TFT 2.4
     cs_pin: 33
     dc_pin: 5
@@ -198,17 +198,57 @@ touchscreen:
                 id(brightness) = id(brightness) - 0.1 < 0 ? 0.0 : id(brightness) - 0.1;
                 id(backlight).set_level(id(brightness));
 
+  #
+  # CALIBRATION CODE for xpt2046
+  # Run this, touch the corners, and see minx, maxx, miny, maxy
+  # THIS code has a problem because x_raw and y_raw don't exist
+  # on TouchPoint. I'm not sure how to calibrate, anymore.
+  #
+  # on_touch:
+  #   then:
+  #     - lambda: |-
+  #         static int minx = 50000;
+  #         static int maxx = 0;
+  #         static int miny = 50000;
+  #         static int maxy = 0;
+  #         esphome::touchscreen::TouchPoint tp = id(touch);
+  #         //if (tp.x_raw < minx) {
+  #         //  minx = tp.x_raw;
+  #         //}
+  #         //if (tp.x_raw > maxx) {
+  #         //  maxx = tp.x_raw;
+  #         //}
+  #         //if (id(touch)->y_raw < miny) {
+  #         //  miny = id(touch)->y_raw;
+  #         //}
+  #         //if (id(touch)->y_raw > maxy) {
+  #         //  maxy = id(touch)->y_raw;
+  #         //}
+  #         ESP_LOGI("cal", "x=%d, y=%d, x_raw=%d, y_raw=%d, minx=%d, maxx=%d, miny=%d, maxy=%d",
+  #             tp.x,
+  #             tp.y,
+  #             0, // id(touch).x_raw,
+  #             0, // id(touch).y_raw,
+  #             minx,
+  #             maxx,
+  #             miny,
+  #             maxy
+  #             );
+
+
 time:
   - platform: homeassistant
     id: esptime
     on_time_sync:
       then:
         - lambda: !lambda |-
-            if (!id(tft_back_door_boot_time).has_state()) {
+            static boolean bootTimeSet = false;
+            if (!bootTimeSet) {
               auto now = id(esptime).now();
               char buffer[20];
               now.strftime(buffer, sizeof(buffer), "%Y-%m-%dT%H:%M:%S");
               id(tft_back_door_boot_time).publish_state(buffer);
+              bootTimeSet = true;
             }
 
 text_sensor:

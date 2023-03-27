@@ -122,7 +122,7 @@ globals:
     initial_value: "1.0"
 
 display:
-  - platform: ili9341
+  - platform: ili9xxx
     model: TFT 2.4
     cs_pin: 33
     dc_pin: 5
@@ -158,8 +158,17 @@ touchscreen:
   calibration_x_max: 3771
   calibration_y_min: 3845
   calibration_y_max: 471
+  ## Help eliminate phantom presses
+  threshold: 400
+  update_interval: 50ms
+  report_interval: 1s
   on_touch:
     then:
+      - lambda: |-
+          // Log the touch
+          ESP_LOGD("ili9341-touch", "x=%d y=%d", 
+            (id(touch)).x,
+            (id(touch)).y);
       - if:
           condition:
             lambda: |-
@@ -189,9 +198,30 @@ output:
     pin: 17
     id: backlight
 
+text_sensor:
+  - platform: template
+    name: "tft-office Boot Timestamp"
+    id: boot_timestamp
+    icon: mdi:clock-start
+
+time:
+  - platform: homeassistant
+    id: esptime
+    on_time_sync:
+      then:
+        - lambda: !lambda |-
+            static boolean bootTimestampSet = false;
+            if (!bootTimestampSet) {
+              bootTimestampSet = true;
+              auto now = id(esptime).now();
+              char buffer[20];
+              now.strftime(buffer, sizeof(buffer), "%Y-%m-%dT%H:%M:%S");
+              id(boot_timestamp).publish_state(buffer);
+            }
+
 sensor:
   ##
-  ## HA sensors we need to do our work.
+  ## Sensors we need to do our work.
   ##
   - platform: homeassistant
     id: back_yard_temperature
@@ -199,33 +229,3 @@ sensor:
   - platform: homeassistant
     id: inside_temperature
     entity_id: sensor.office_sensor_temperature
-  ##
-  ## For debugging
-  ##
-  # - platform: debug
-  #   free:
-  #     name: "Heap Free"
-  #   # fragmentation:
-  #   #   name: "Heap Fragmentation"
-  #   block:
-  #     name: "Heap Max Block"
-  #   loop_time:
-  #     name: "Loop Time"
-
-text_sensor:
-  ##
-  ## For debugging
-  ##
-  # - platform: debug
-  #   device:
-  #     name: "Device Info"
-
-time:
-  - platform: homeassistant
-    id: esptime
-
-##
-## For debugging
-##
-# debug:
-#   update_interval: 5s
