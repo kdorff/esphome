@@ -85,6 +85,8 @@ std::vector<std::string> outdoorLabelText = {"outside"};
 
 std::vector<std::string> blankText = {};
 
+// Remember the display we are writing to so we
+// can use it whenever we need. Defined in initializePanels().
 esphome::display::DisplayBuffer* lcd = NULL;
 
 // One time, initialize the Panels
