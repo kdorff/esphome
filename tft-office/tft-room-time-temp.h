@@ -1,4 +1,5 @@
 #include <display-panel.h>
+// #include "display-panel-dev.h"
 
 // For sprintf calls.
 char buffer[25];
@@ -39,6 +40,7 @@ char buffer[25];
 //
 
 // The Panels used by this app
+// X, Y, W, H
 DisplayPanel contDownPanel(0, 0, CONT_WIDTH, CONT_HEIGHT);
 DisplayPanel datePanel(CONT_WIDTH, 0, DATE_WIDTH, DATE_HEIGHT);
 DisplayPanel dayPanel(CONT_WIDTH, DATE_HEIGHT, DAY_WIDTH, DAY_HEIGHT);
@@ -51,11 +53,29 @@ DisplayPanel insideLabelPanel(0, CONT_HEIGHT + TIME_HEIGHT +  TEMP_HEIGHT, TEMP_
 DisplayPanel outdoorTempPanel(TEMP_WIDTH, CONT_HEIGHT + TIME_HEIGHT, TEMP_WIDTH, TEMP_HEIGHT);
 DisplayPanel outdoorLabelPanel(TEMP_WIDTH, CONT_HEIGHT + TIME_HEIGHT +  TEMP_HEIGHT, TEMP_LABEL_WIDTH, TEMP_LABEL_HEIGHT);
 
+DisplayPanel butterflyPanel(0, 0, 200, 200);
+
 DisplayPanel flashPanel(FLASH_X, FLASH_Y, FLASH_WIDTH, FLASH_HEIGHT);
 
+std::vector<std::vector<DisplayPanel*>> pages = {
+    {
+        // Page 0. The only page at the moment.
+        &contDownPanel,
+        &datePanel,
+        &dayPanel,
+        &contUpPanel,
+        &timePanel,
+        &insideTempPanel,
+        &insideLabelPanel,
+        &outdoorLabelPanel,
+        &outdoorTempPanel,
+        &butterflyPanel
+    }
+};
+
 // Static text used by some Panels
-std::vector<std::string> contDownText = {"󰃞"};
-std::vector<std::string> contUpText = {"󰃠"};
+std::vector<std::string> contDownText = { "\U000F00DE" };
+std::vector<std::string> contUpText = { "\U000F00E0" };
 
 std::vector<std::string> insideLabelText = {"room"};
 std::vector<std::string> outdoorLabelText = {"outside"};
@@ -106,6 +126,12 @@ void initializePanels(esphome::display::DisplayBuffer &display) {
     outdoorLabelPanel.color = Color::BLACK;
     outdoorLabelPanel.textColor = color_text_white;
     outdoorLabelPanel.text = outdoorLabelText;
+
+    butterflyPanel.font = font_flash;
+    butterflyPanel.color = color_text_white;;
+    butterflyPanel.textColor = color_green;
+    butterflyPanel.image = butterfly_image;
+    butterflyPanel.enabled = true;
 
     flashPanel.font = font_flash;
     flashPanel.color = Color::BLACK;
@@ -187,17 +213,7 @@ void updatePanelStates(esphome::display::DisplayBuffer &display) {
 // Draw all of the panels
 void drawPanels(esphome::display::DisplayBuffer &display) {
     // drawAllPanels is generally preferred
-    DisplayPanel::drawAllPanels(display, {
-        contDownPanel,
-        datePanel,
-        dayPanel,
-        contUpPanel,
-        timePanel,
-        insideTempPanel,
-        insideLabelPanel,
-        outdoorLabelPanel,
-        outdoorTempPanel
-    });
+    DisplayPanel::drawAllPanels(display, pages[0]);
     // But draw flashPanel separately so it over-draws
     // what is below it.
     flashPanel.draw(display);

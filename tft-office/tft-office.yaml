@@ -36,8 +36,9 @@ esphome:
   name: tft-office
   includes:
     - tft-room-time-temp.h
+  #  - display-panel-dev.h
   libraries:
-    esphome-display-panel=https://github.com/kdorff/esphome-display-panel.git#v0.0.1
+    esphome-display-panel=https://github.com/kdorff/esphome-display-panel.git#v0.0.3
 
 esp32:
   board: esp32dev
@@ -78,16 +79,29 @@ color:
     red: 100%
     green: 100%
     blue: 100%
+  - id: color_green
+    red: 0%
+    green: 100%
+    blue: 0%
 
 font:
   - file: 'fonts/materialdesignicons-webfont.ttf'
     id: icon_font_45
     size: 45
-    glyphs: [
-      "󰃠", # bright down
-      "󰃞", # bright up
-      "󰀠"  # alarm
-    ]
+    ## Method for using glyphs in YAML and C++ come from neil123's comments in
+    ## https://tinyurl.com/esphome-font-glyphs
+    ##
+    ## Process:
+    ## * Install the font materialdesignicons-webfont.ttf both locally
+    ##   and in the the esphome/fonts folder.
+    ## * Using Character Map UWP (available in the Microsoft Store), 
+    ##   * Select the font materialdesignicons-webfont.ttf
+    ##   * Find the symbol you want to use (you can search)
+    ##   * Note it's name and code code (such as 'U+F0020' for 'alarm').
+    glyphs:
+      - "\U000F00E0" # 'brightness 5' (brightness up)
+      - "\U000F00DE" # 'brightness 7' (brightness down)
+      - "\U000F0020" # 'alarm' (brightness down)
   - file: "gfonts://Rubik@800"
     id: font_cont
     size: 70
@@ -109,6 +123,12 @@ font:
   - file: "gfonts://Rubik@600"
     id: font_flash
     size: 30
+
+image:
+  - file: "images/butterfly.png"
+    id: butterfly_image
+    type: RGB565
+    resize: 200x200
 
 spi:
   clk_pin: 18
@@ -161,14 +181,13 @@ touchscreen:
   ## Help eliminate phantom presses
   threshold: 400
   update_interval: 50ms
-  report_interval: 1s
+  report_interval: 200ms
   on_touch:
     then:
       - lambda: |-
-          // Log the touch
-          ESP_LOGD("ili9341-touch", "x=%d y=%d", 
-            (id(touch)).x,
-            (id(touch)).y);
+          ESP_LOGD("ili9341-touch", "x=%d, y=%d",
+              (id(touch)).x,
+              (id(touch)).y);
       - if:
           condition:
             lambda: |-
@@ -186,7 +205,7 @@ touchscreen:
               return contDownPanel.isTouchOnPanel((id(touch)).x, (id(touch)).y);
           then:
             - lambda: |-
-                // Decrease brightness 5%
+                // Decrease brightness 10%
                 id(brightness) = id(brightness) - 0.01 < 0 ? 0.0 : id(brightness) - 0.01;
                 id(backlight).set_level(id(brightness));
                 sprintf(buffer, "Decreased to %.0f%%", id(brightness)*100);
