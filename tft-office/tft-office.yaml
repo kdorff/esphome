@@ -194,7 +194,7 @@ touchscreen:
       #         return panelTouched((id(touch)).x, (id(touch)).y);
       #     then:
       #       - lambda: |-
-      #           enableFlash({"Panel Toched", lastTouchedPanel->name, lastTouchedPanel->tag });
+      #           enableFlash({"Panel Touched", lastTouchedPanel->name, lastTouchedPanel->tag });
       - if:
           condition:
             lambda: |-
