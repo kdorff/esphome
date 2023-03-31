@@ -1,11 +1,11 @@
 #include <display-panel.h>
 // #include "display-panel-dev.h"
 
-// The last touched panel. Defined by call to isPanelTouched(x, y)
-DisplayPanel* lastTouchedPanel = NULL;
-
 // The current page number. This device only has one page.
 int pageNumber = 0;
+
+// Last touched page
+DisplayPanel *lastTouchedPanel = NULL;
 
 // The display/lcd we are working with. Defined in initializePanels().
 esphome::display::DisplayBuffer* lcd = NULL;
@@ -245,17 +245,11 @@ void drawPanels() {
     flashPanel.draw(*(lcd));
 }
 
-// Check all enabled, touchable panels on the current page
-// to see if one was touched.
-// If one was touched lastTouchedPanel will contain a pointer to it.
+// Return true if one of the panels on the current page
+// was touched (it must be enabled and touchable, too).
+// If this returns true true, lastTouchedPanel will be a pointer to the
+// touched panel. 
 boolean isPanelTouched(int tpX, int tpY) {
-    lastTouchedPanel = NULL;
-    for (std::vector<DisplayPanel*>::iterator panel = pages[pageNumber].begin(); panel != pages[pageNumber].end(); panel++) {
-        if ((*(*panel)).isTouchOnPanel(tpX, tpY)) {
-            // ESP_LOGD("touched", "touched %s x=%d, y=%d", (*(*panel)).text[0], tpX, tpX);
-            lastTouchedPanel = &(*(*panel));
-            return true;
-        }
-    }
-    return false;
+    lastTouchedPanel = DisplayPanel::touchedPanel(pages[pageNumber], tpX, tpY);
+    return lastTouchedPanel != NULL;
 }
