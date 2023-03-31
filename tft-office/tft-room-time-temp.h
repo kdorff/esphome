@@ -245,10 +245,10 @@ void drawPanels() {
     flashPanel.draw(*(lcd));
 }
 
-// Return true if one of the panels on the current page
-// was touched (it must be enabled and touchable, too).
-// If this returns true true, lastTouchedPanel will be a pointer to the
-// touched panel. 
+// See if one of the enabled, touchable panels on the
+// current page has been touched.
+// lastTouchedPanel will be set to a pointer to the
+// touched panel (or NULL of no panel was found for the coordinates).
 boolean isPanelTouched(int tpX, int tpY) {
     lastTouchedPanel = DisplayPanel::touchedPanel(pages[pageNumber], tpX, tpY);
     return lastTouchedPanel != NULL;
