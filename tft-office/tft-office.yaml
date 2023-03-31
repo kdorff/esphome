@@ -188,35 +188,35 @@ touchscreen:
       #     ESP_LOGD("ili9341-touch", "x=%d, y=%d",
       #         (id(touch)).x,
       #         (id(touch)).y);
-      # - if:
-      #     condition:
-      #       lambda: |-
-      #         return panelTouched((id(touch)).x, (id(touch)).y);
-      #     then:
-      #       - lambda: |-
-      #           enableFlash({"Panel Touched", lastTouchedPanel->name, lastTouchedPanel->tag });
       - if:
           condition:
             lambda: |-
-              return contUpPanel.isTouchOnPanel((id(touch)).x, (id(touch)).y);
+              return panelTouched((id(touch)).x, (id(touch)).y);
           then:
             - lambda: |-
-                // Increase brightness 5%
-                id(brightness) = id(brightness) + 0.01 > 1 ? 1.0 : id(brightness) + 0.01;
-                id(backlight).set_level(id(brightness));
-                sprintf(buffer, "Increased to %.0f%%", id(brightness)*100);
-                enableFlash({"Brightness", buffer});
-      - if:
-          condition:
-            lambda: |-
-              return contDownPanel.isTouchOnPanel((id(touch)).x, (id(touch)).y);
-          then:
-            - lambda: |-
-                // Decrease brightness 10%
-                id(brightness) = id(brightness) - 0.01 < 0 ? 0.0 : id(brightness) - 0.01;
-                id(backlight).set_level(id(brightness));
-                sprintf(buffer, "Decreased to %.0f%%", id(brightness)*100);
-                enableFlash({"Brightness", buffer});
+                ESP_LOGD("yaml", "touched name=%s", (lastTouchedPanel->name));
+            - if:
+                condition:
+                  lambda: |-
+                    return (lastTouchedPanel->name == "contUpPanel");
+                then:
+                  - lambda: |-
+                      // Increase brightness 1%
+                      id(brightness) = id(brightness) + 0.01 > 1 ? 1.0 : id(brightness) + 0.01;
+                      id(backlight).set_level(id(brightness));
+                      sprintf(buffer, "Increased to %.0f%%", id(brightness)*100);
+                      enableFlash({"Brightness", buffer});
+            - if:
+                condition:
+                  lambda: |-
+                    return (lastTouchedPanel->name == "contDownPanel");
+                then:
+                  - lambda: |-
+                      // Decrease brightness 1%
+                      id(brightness) = id(brightness) - 0.01 < 0 ? 0.0 : id(brightness) - 0.01;
+                      id(backlight).set_level(id(brightness));
+                      sprintf(buffer, "Decreased to %.0f%%", id(brightness)*100);
+                      enableFlash({"Brightness", buffer});
 
 # Define a PWM output on the ESP32
 output:

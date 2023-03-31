@@ -97,7 +97,8 @@ void initializePanels(esphome::display::DisplayBuffer &display) {
     timePanel.color = Color::BLACK;
     timePanel.textColor = color_text_white;
     timePanel.fontVertOffset = 8;
-    timePanel.touchable = false;
+    timePanel.touchable = true;
+    timePanel.name = "timePanel";
 
     dayPanel.font = font_day;
     dayPanel.color = Color::BLACK;
@@ -250,17 +251,19 @@ void drawPanels() {
  * lastTouchedPanel a pointer to the touched DisplayPanel.
  */
 
-// DisplayPanel* lastTouchedPanel = NULL;
+DisplayPanel* lastTouchedPanel = NULL;
 
-// Draw all of the panels
-// boolean panelTouched(int tpX, int tpY) {
-//     lastTouchedPanel = NULL;
-//     for (std::vector<DisplayPanel*>::iterator panel = pages[pageNumber].begin(); panel != pages[pageNumber].end(); panel++) {
-//         if ((*(*panel)).isTouchOnPanel(tpX, tpY)) {
-//             ESP_LOGD("touched", "touched %s x=%d, y=%d", (*(*panel)).text[0], tpX, tpX);
-//             lastTouchedPanel = &(*(*panel));
-//             return true;
-//         }
-//     }
-//     return false;
-// }
+// Check all enabled, touchable panels on the current page
+// to see if one was touched.
+// If one was touched lastTouchedPanel will contain a pointer to it.
+boolean panelTouched(int tpX, int tpY) {
+    lastTouchedPanel = NULL;
+    for (std::vector<DisplayPanel*>::iterator panel = pages[pageNumber].begin(); panel != pages[pageNumber].end(); panel++) {
+        if ((*(*panel)).isTouchOnPanel(tpX, tpY)) {
+            // ESP_LOGD("touched", "touched %s x=%d, y=%d", (*(*panel)).text[0], tpX, tpX);
+            lastTouchedPanel = &(*(*panel));
+            return true;
+        }
+    }
+    return false;
+}
