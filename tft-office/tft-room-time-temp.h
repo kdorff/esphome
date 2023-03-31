@@ -57,6 +57,9 @@ DisplayPanel butterflyPanel(0, 0, 200, 200);
 
 DisplayPanel flashPanel(FLASH_X, FLASH_Y, FLASH_WIDTH, FLASH_HEIGHT);
 
+// The current page number. This device only has one page.
+int pageNumber = 0;
+
 std::vector<std::vector<DisplayPanel*>> pages = {
     {
         // Page 0. The only page at the moment.
@@ -82,62 +85,80 @@ std::vector<std::string> outdoorLabelText = {"outside"};
 
 std::vector<std::string> blankText = {};
 
+esphome::display::DisplayBuffer* lcd = NULL;
+
 // One time, initialize the Panels
 void initializePanels(esphome::display::DisplayBuffer &display) {
+    lcd = &display;
+
     timePanel.font = font_time;
     timePanel.color = Color::BLACK;
     timePanel.textColor = color_text_white;
     timePanel.fontVertOffset = 8;
+    timePanel.touchable = false;
 
     dayPanel.font = font_day;
     dayPanel.color = Color::BLACK;
     dayPanel.textColor = color_text_white;
+    dayPanel.touchable = false;
 
     datePanel.font = font_date;
     datePanel.color = Color::BLACK;
     datePanel.textColor = color_text_white;
+    datePanel.touchable = false;
 
     contUpPanel.font = icon_font_45;
     contUpPanel.color = Color::BLACK;
     contUpPanel.textColor = color_text_white;
     contUpPanel.text = contUpText;
+    contUpPanel.name = "contUpPanel";
+    contUpPanel.tag = contUpPanel.name + " tag";
 
     contDownPanel.font = icon_font_45;
     contDownPanel.color = Color::BLACK;
     contDownPanel.textColor = color_text_white;
     contDownPanel.text = contDownText;
+    contDownPanel.name = "contDownPanel";
+    contDownPanel.tag = contDownPanel.name + " tag";
 
     insideTempPanel.font = font_temp;
     insideTempPanel.color = Color::BLACK;
     insideTempPanel.textColor = color_text_white;
     insideTempPanel.fontVertOffset = 6;
+    insideTempPanel.touchable = false;
 
     insideLabelPanel.font = font_temp_label;
     insideLabelPanel.color = Color::BLACK;
     insideLabelPanel.textColor = color_text_white;
     insideLabelPanel.text = insideLabelText;
+    insideLabelPanel.touchable = false;
 
     outdoorTempPanel.font = font_temp;
     outdoorTempPanel.color = Color::BLACK;
     outdoorTempPanel.textColor = color_text_white;
     outdoorTempPanel.fontVertOffset = 6;
+    outdoorTempPanel.touchable = false;
 
     outdoorLabelPanel.font = font_temp_label;
     outdoorLabelPanel.color = Color::BLACK;
     outdoorLabelPanel.textColor = color_text_white;
     outdoorLabelPanel.text = outdoorLabelText;
+    outdoorLabelPanel.touchable = false;
 
     butterflyPanel.font = font_flash;
     butterflyPanel.color = color_text_white;;
     butterflyPanel.textColor = color_green;
     butterflyPanel.image = butterfly_image;
-    butterflyPanel.enabled = true;
+    butterflyPanel.enabled = false;   // Was just for testing.
+    butterflyPanel.tag = "hello, baby";
+    butterflyPanel.touchable = false;
 
     flashPanel.font = font_flash;
     flashPanel.color = Color::BLACK;
     flashPanel.textColor = color_text_white;
     flashPanel.drawPanelOutline = true;
-    flashPanel.enabled = false;
+    flashPanel.enabled = false;  // By default not display.
+    flashPanel.touchable = false;
 
     // Restore brightness from the global
     backlight->set_level(brightness->value());
@@ -156,7 +177,7 @@ void enableFlash(std::vector<std::string> flashText) {
 
 // Once per "frame", update the state of all of the panels.
 // This does NOT draw.
-void updatePanelStates(esphome::display::DisplayBuffer &display) {
+void updatePanelStates() {
     // Time      
     auto now = esptime->now();
     int hour = now.hour;
@@ -211,10 +232,33 @@ void updatePanelStates(esphome::display::DisplayBuffer &display) {
 }
 
 // Draw all of the panels
-void drawPanels(esphome::display::DisplayBuffer &display) {
+void drawPanels() {
     // drawAllPanels is generally preferred
-    DisplayPanel::drawAllPanels(display, pages[0]);
+    DisplayPanel::drawAllPanels(*(lcd), pages[pageNumber]);
     // But draw flashPanel separately so it over-draws
     // what is below it.
-    flashPanel.draw(display);
+    flashPanel.draw(*(lcd));
 }
+
+
+/* 
+ * ALTERNATIVE method for handling touch in one go.
+ * If touch is detected on one of the enabled, touchable
+ * DisplayPanels on the current page, this will set 
+ * lastTouchedPanel a pointer to the touched DisplayPanel.
+ */
+
+// DisplayPanel* lastTouchedPanel = NULL;
+
+// Draw all of the panels
+// boolean panelTouched(int tpX, int tpY) {
+//     lastTouchedPanel = NULL;
+//     for (std::vector<DisplayPanel*>::iterator panel = pages[pageNumber].begin(); panel != pages[pageNumber].end(); panel++) {
+//         if ((*(*panel)).isTouchOnPanel(tpX, tpY)) {
+//             ESP_LOGD("touched", "touched %s x=%d, y=%d", (*(*panel)).text[0], tpX, tpX);
+//             lastTouchedPanel = &(*(*panel));
+//             return true;
+//         }
+//     }
+//     return false;
+// }

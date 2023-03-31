@@ -38,7 +38,7 @@ esphome:
     - tft-room-time-temp.h
   #  - display-panel-dev.h
   libraries:
-    esphome-display-panel=https://github.com/kdorff/esphome-display-panel.git#v0.0.3
+    esphome-display-panel=https://github.com/kdorff/esphome-display-panel.git#v0.0.6
 
 esp32:
   board: esp32dev
@@ -158,8 +158,8 @@ display:
         panelsInitialized = 1;
       }
 
-      updatePanelStates(it);
-      drawPanels(it);
+      updatePanelStates();
+      drawPanels();
 
 touchscreen:
   ##
@@ -184,10 +184,17 @@ touchscreen:
   report_interval: 200ms
   on_touch:
     then:
-      - lambda: |-
-          ESP_LOGD("ili9341-touch", "x=%d, y=%d",
-              (id(touch)).x,
-              (id(touch)).y);
+      # - lambda: |-
+      #     ESP_LOGD("ili9341-touch", "x=%d, y=%d",
+      #         (id(touch)).x,
+      #         (id(touch)).y);
+      # - if:
+      #     condition:
+      #       lambda: |-
+      #         return panelTouched((id(touch)).x, (id(touch)).y);
+      #     then:
+      #       - lambda: |-
+      #           enableFlash({"Panel Toched", lastTouchedPanel->name, lastTouchedPanel->tag });
       - if:
           condition:
             lambda: |-
