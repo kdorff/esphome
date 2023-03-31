@@ -191,7 +191,7 @@ touchscreen:
       - if:
           condition:
             lambda: |-
-              return panelTouched((id(touch)).x, (id(touch)).y);
+              return isPanelTouched((id(touch)).x, (id(touch)).y);
           then:
             - lambda: |-
                 ESP_LOGD("yaml", "touched name=%s", (lastTouchedPanel->name.c_str()));

@@ -1,6 +1,15 @@
 #include <display-panel.h>
 // #include "display-panel-dev.h"
 
+// The last touched panel. Defined by call to isPanelTouched(x, y)
+DisplayPanel* lastTouchedPanel = NULL;
+
+// The current page number. This device only has one page.
+int pageNumber = 0;
+
+// The display/lcd we are working with. Defined in initializePanels().
+esphome::display::DisplayBuffer* lcd = NULL;
+
 // For sprintf calls.
 char buffer[25];
 
@@ -57,9 +66,6 @@ DisplayPanel butterflyPanel(0, 0, 200, 200);
 
 DisplayPanel flashPanel(FLASH_X, FLASH_Y, FLASH_WIDTH, FLASH_HEIGHT);
 
-// The current page number. This device only has one page.
-int pageNumber = 0;
-
 std::vector<std::vector<DisplayPanel*>> pages = {
     {
         // Page 0. The only page at the moment.
@@ -84,10 +90,6 @@ std::vector<std::string> insideLabelText = {"room"};
 std::vector<std::string> outdoorLabelText = {"outside"};
 
 std::vector<std::string> blankText = {};
-
-// Remember the display we are writing to so we
-// can use it whenever we need. Defined in initializePanels().
-esphome::display::DisplayBuffer* lcd = NULL;
 
 // One time, initialize the Panels
 void initializePanels(esphome::display::DisplayBuffer &display) {
@@ -243,20 +245,10 @@ void drawPanels() {
     flashPanel.draw(*(lcd));
 }
 
-
-/* 
- * ALTERNATIVE method for handling touch in one go.
- * If touch is detected on one of the enabled, touchable
- * DisplayPanels on the current page, this will set 
- * lastTouchedPanel a pointer to the touched DisplayPanel.
- */
-
-DisplayPanel* lastTouchedPanel = NULL;
-
 // Check all enabled, touchable panels on the current page
 // to see if one was touched.
 // If one was touched lastTouchedPanel will contain a pointer to it.
-boolean panelTouched(int tpX, int tpY) {
+boolean isPanelTouched(int tpX, int tpY) {
     lastTouchedPanel = NULL;
     for (std::vector<DisplayPanel*>::iterator panel = pages[pageNumber].begin(); panel != pages[pageNumber].end(); panel++) {
         if ((*(*panel)).isTouchOnPanel(tpX, tpY)) {
