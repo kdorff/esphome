@@ -5,10 +5,10 @@
 int pageNumber = 0;
 
 // Last touched page
-DisplayPanel *lastTouchedPanel = NULL;
+DisplayPanel* lastTouchedPanel = NULL;
 
 // The display/lcd we are working with. Defined in initializePanels().
-esphome::display::DisplayBuffer* lcd = NULL;
+esphome::display::DisplayBuffer* lcd;
 
 // For sprintf calls.
 char buffer[25];

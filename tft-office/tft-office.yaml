@@ -38,7 +38,7 @@ esphome:
     - tft-room-time-temp.h
     # - display-panel-dev.h
   libraries:
-    esphome-display-panel=https://github.com/kdorff/esphome-display-panel.git#v0.0.8
+    esphome-display-panel=https://github.com/kdorff/esphome-display-panel.git#v0.0.10
 
 esp32:
   board: esp32dev
@@ -161,11 +161,15 @@ display:
       drawPanels();
 
 touchscreen:
+  ##
+  ## This is likely more responsive if I add T_IRQ
+  ##
   platform: xpt2046
   id: touch
   cs_pin: 32
   interrupt_pin: 21
   swap_x_y: false
+  ##
   ## From running calibration (code is commented out, below)
   ## for rotation: 0 these were good
   ## minx=426, maxx=3771, miny=471, maxy=3845
