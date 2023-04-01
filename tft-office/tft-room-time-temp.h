@@ -239,10 +239,10 @@ void updatePanelStates() {
 // Draw all of the panels
 void drawPanels() {
     // drawAllPanels is generally preferred
-    DisplayPanel::drawAllPanels(*(lcd), pages[pageNumber]);
+    DisplayPanel::drawAllPanels(*lcd, pages[pageNumber]);
     // But draw flashPanel separately so it over-draws
     // what is below it.
-    flashPanel.draw(*(lcd));
+    flashPanel.draw(*lcd);
 }
 
 // See if one of the enabled, touchable panels on the
