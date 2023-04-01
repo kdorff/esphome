@@ -38,14 +38,13 @@ esphome:
     - tft-room-time-temp.h
     # - display-panel-dev.h
   libraries:
-    esphome-display-panel=https://github.com/kdorff/esphome-display-panel.git#v0.0.12
+    esphome-display-panel=https://github.com/kdorff/esphome-display-panel.git#v0.0.13
 
 esp32:
   board: esp32dev
   framework:
     type: arduino
 
-# Enable Home Assistant API
 api:
   encryption:
     key: !secret tft_test1_api_encryption
@@ -56,6 +55,12 @@ ota:
 wifi:
   ssid: !secret wifi_ssid
   password: !secret wifi_password
+  fast_connect: true
+  domain: .mylocal
+  manual_ip:
+    static_ip: 192.168.1.181
+    gateway: 192.168.1.1
+    subnet: 255.255.255.0
 
   # Enable fallback hotspot (captive portal) in case wifi connection fails
   ap:
@@ -151,33 +156,25 @@ display:
     auto_clear_enabled: True
     update_interval: 0.1s
     lambda: |-
-      static bool panelsInitialized = 0;
+      static bool panelsInitialized = false;
       if (!panelsInitialized) {
         initializePanels(it);
-        panelsInitialized = 1;
+        panelsInitialized = true;
       }
 
       updatePanelStates();
       drawPanels();
 
 touchscreen:
-  ##
-  ## This is likely more responsive if I add T_IRQ
-  ##
   platform: xpt2046
   id: touch
   cs_pin: 32
   interrupt_pin: 21
   swap_x_y: false
-  ##
-  ## From running calibration (code is commented out, below)
-  ## for rotation: 0 these were good
-  ## minx=426, maxx=3771, miny=471, maxy=3845
   calibration_x_min: 426
   calibration_x_max: 3771
   calibration_y_min: 3845
   calibration_y_max: 471
-  ## Help eliminate phantom presses
   threshold: 400
   update_interval: 50ms
   report_interval: 200ms
@@ -204,7 +201,7 @@ touchscreen:
                       id(brightness) = id(brightness) + 0.01 > 1 ? 1.0 : id(brightness) + 0.01;
                       id(backlight).set_level(id(brightness));
                       sprintf(buffer, "Increased to %.0f%%", id(brightness)*100);
-                      enableFlash({"Brightness", buffer});
+                      enableFlash({ "Brightness", buffer });
             - if:
                 condition:
                   lambda: |-
@@ -215,7 +212,7 @@ touchscreen:
                       id(brightness) = id(brightness) - 0.01 < 0 ? 0.0 : id(brightness) - 0.01;
                       id(backlight).set_level(id(brightness));
                       sprintf(buffer, "Decreased to %.0f%%", id(brightness)*100);
-                      enableFlash({"Brightness", buffer});
+                      enableFlash({ "Brightness", buffer });
 
 # Define a PWM output on the ESP32
 output:
@@ -239,15 +236,11 @@ time:
             if (!bootTimestampSet) {
               bootTimestampSet = true;
               auto now = id(esptime).now();
-              char buffer[20];
               now.strftime(buffer, sizeof(buffer), "%Y-%m-%dT%H:%M:%S");
               id(boot_timestamp).publish_state(buffer);
             }
 
 sensor:
-  ##
-  ## Sensors we need to do our work.
-  ##
   - platform: homeassistant
     id: back_yard_temperature
     entity_id: sensor.back_yard_sensor_temperature

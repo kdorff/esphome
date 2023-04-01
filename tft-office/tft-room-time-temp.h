@@ -43,11 +43,6 @@ char buffer[25];
 #define FLASH_X PW(5)
 #define FLASH_Y PH(20)
 
-//
-// TODO: Anything we can to to simplify touch?
-// TODO: Move day of week below time, full width
-//
-
 // The Panels used by this app
 // X, Y, W, H
 DisplayPanel contDownPanel(0, 0, CONT_WIDTH, CONT_HEIGHT);
@@ -191,19 +186,15 @@ void updatePanelStates() {
     hour = hour == 0 ? 12 : 
         hour > 12 ? hour - 12 : hour;
     sprintf(buffer, "%d:%02d", hour, minute);
-    std::vector<std::string> timeText = { buffer };
-    timePanel.text = timeText;
+    timePanel.text = { buffer };
 
     // Day of the week
-    std::string dayName = now.strftime("%A");
-    std::vector<std::string> dayText = { dayName };
-    dayPanel.text = dayText;
+    dayPanel.text = { now.strftime("%A") };
 
     // Date
-    std::string monthName = now.strftime("%b");
-    sprintf(buffer, "%s. %d", monthName.c_str(), now.day_of_month);
-    std::vector<std::string> dateText = { buffer };
-    datePanel.text = dateText;
+    datePanel.text = { 
+        now.strftime("%b") + ". " + std::to_string(now.day_of_month)
+    };
 
     if (back_yard_temperature->has_state() || inside_temperature->has_state()) {
         insideLabelPanel.enabled = true;
@@ -213,14 +204,12 @@ void updatePanelStates() {
         if (inside_temperature->has_state()) {
             // Temperature
             sprintf(buffer, "%.0f°", inside_temperature->state);
-            std::vector<std::string> tempText = { buffer };
-            insideTempPanel.text = tempText;
+            insideTempPanel.text = { buffer };
         }
         if (back_yard_temperature->has_state()) {
             // Temperature
             sprintf(buffer, "%.0f°", back_yard_temperature->state);
-            std::vector<std::string> tempText = { buffer };
-            outdoorTempPanel.text = tempText;
+            outdoorTempPanel.text = { buffer };
         }
     }
     else {
@@ -235,6 +224,7 @@ void updatePanelStates() {
         flashPanel.enabled = false;
     }
 }
+
 
 // Draw all of the panels
 void drawPanels() {
