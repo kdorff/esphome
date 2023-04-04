@@ -1,5 +1,8 @@
 #include <display-panel.h>
 
+// The display/lcd we are working with. Defined in initializePanels().
+esphome::display::DisplayBuffer* lcd = NULL;
+
 // For sprintf calls.
 char buffer[25];
 
@@ -27,11 +30,23 @@ DisplayPanel insideTempPanel(TIME_WIDTH, TEMP_LABEL_HEIGHT, TEMP_WIDTH, TEMP_HEI
 DisplayPanel outdoorLabelPanel(TIME_WIDTH, TEMP_LABEL_HEIGHT + TEMP_HEIGHT, TEMP_LABEL_WIDTH, TEMP_LABEL_HEIGHT);
 DisplayPanel outdoorTempPanel(TIME_WIDTH, (TEMP_LABEL_HEIGHT * 2) + TEMP_HEIGHT, TEMP_WIDTH, TEMP_HEIGHT);
 
+std::vector<DisplayPanel*> panels = {
+    &timePanel,
+    &alarmPanel,
+    &datePanel,
+    &insideLabelPanel,
+    &insideTempPanel,
+    &outdoorLabelPanel,
+    &outdoorTempPanel
+};
+
 std::vector<std::string> insideLabelText = {"room"};
 std::vector<std::string> outdoorLabelText = {"outside"};
 std::vector<std::string> blankText = {};
 
 void initializePanels(esphome::display::DisplayBuffer &display) {
+    lcd = &display;
+
     timePanel.font = font_time;
     timePanel.color = Color::BLACK;
     timePanel.textColor = Color::WHITE;
@@ -63,17 +78,7 @@ void initializePanels(esphome::display::DisplayBuffer &display) {
     outdoorTempPanel.textColor = Color::WHITE;
 }
 
-void drawPanels(esphome::display::DisplayBuffer &display) {
-    timePanel.draw(display);
-    alarmPanel.draw(display);
-    datePanel.draw(display);
-    insideLabelPanel.draw(display);
-    insideTempPanel.draw(display);
-    outdoorLabelPanel.draw(display);
-    outdoorTempPanel.draw(display);
-}
-
-void updatePanelStates(esphome::display::DisplayBuffer &display) {
+void updatePanelStates() {
     // Time      
     auto now = esptime->now();
     int hour = now.hour;
@@ -135,4 +140,9 @@ void updatePanelStates(esphome::display::DisplayBuffer &display) {
         insideLabelPanel.enabled = false;
         outdoorLabelPanel.enabled = false;
     }
+}
+
+// Draw all of the panels
+void drawPanels() {
+    DisplayPanel::drawAllPanels(*lcd, panels);
 }

@@ -7,7 +7,7 @@ esphome:
   includes:
     - tft-door-monitor.h
   libraries:
-    - esphome-display-panel=https://github.com/kdorff/esphome-display-panel.git#v0.0.2
+    - esphome-display-panel=https://github.com/kdorff/esphome-display-panel.git#v0.0.13
 
 esp32:
   board: esp32dev
@@ -28,7 +28,6 @@ ota:
 wifi:
   ssid: !secret wifi_ssid
   password: !secret wifi_password
-  fast_connect: true
 
   # Enable fallback hotspot (captive portal) in case wifi connection fails
   ap:
@@ -96,14 +95,14 @@ display:
     auto_clear_enabled: False
     update_interval: 0.1s
     lambda: |-
-      static bool panelsInitialized = 0;
+      static bool panelsInitialized = false;
       if (!panelsInitialized) {
         initializePanels(it);
-        panelsInitialized = 1;
+        panelsInitialized = true;
       }
 
-      updatePanelStates(it);
-      drawPanels(it);
+      updatePanelStates();
+      drawPanels();
       
 # Define a PWM output on the ESP32
 output:
@@ -137,66 +136,73 @@ touchscreen:
       - if:
           condition:
             lambda: |-
-              return backDoorPanel.isTouchOnPanel((id(touch)).x, (id(touch)).y);
-          then:
-            - if:
-                condition:
-                    - binary_sensor.is_on: back_door_autolock
-                then:
-                  - logger.log: "Back door autolock disabled"
-                  - homeassistant.service:
-                      ##
-                      ## I thought changing ESPHome's binary_sensor.back_door_autolock
-                      ## should have changed the associated input_boolean.keymaster_back_door_autolock
-                      ## but it didn't seem to. Calling the HA service to change the value worked.
-                      ##
-                      service: "input_boolean.turn_off"
-                      data:
-                        entity_id: "input_boolean.keymaster_back_door_autolock"
-                else:
-                  - logger.log: "Back door autolock enabled"
-                  - homeassistant.service:
-                      service: "input_boolean.turn_on"
-                      data:
-                        entity_id: "input_boolean.keymaster_back_door_autolock"
-      - if:
-          condition:
-            lambda: |-
-              return frontDoorPanel.isTouchOnPanel((id(touch)).x, (id(touch)).y);
-          then:
-            - if:
-                condition:
-                  - binary_sensor.is_on: front_door_autolock
-                then:
-                  - logger.log: "Front door autolock disabled"
-                  - homeassistant.service:
-                      service: "input_boolean.turn_off"
-                      data:
-                        entity_id: "input_boolean.keymaster_front_door_autolock"
-                else:
-                  - logger.log: "Front door autolock enabled"
-                  - homeassistant.service:
-                      service: "input_boolean.turn_on"
-                      data:
-                        entity_id: "input_boolean.keymaster_front_door_autolock"
-      - if:
-          condition:
-            lambda: |-
-              return brightnessUpPanel.isTouchOnPanel((id(touch)).x, (id(touch)).y);
+              return isPanelTouched((id(touch)).x, (id(touch)).y);
           then:
             - lambda: |-
-                // Increase brightness 10%
-                id(brightness) = id(brightness) + 0.1 > 1 ? 1.0 : id(brightness) + 0.1;
-                id(backlight).set_level(id(brightness));
-      - if:
-          condition:
-            lambda: |-
-              return brightnessDownPanel.isTouchOnPanel((id(touch)).x, (id(touch)).y);
-          then:
-            - lambda: |-
-                // Decrease brightness 10%
-                id(brightness) = id(brightness) - 0.1 < 0 ? 0.0 : id(brightness) - 0.1;
-                id(backlight).set_level(id(brightness));
+                ESP_LOGD("yaml", "touched name=%s", (lastTouchedPanel->name.c_str()));
+            - if:
+                condition:
+                  lambda: |-
+                    return (lastTouchedPanel == &brightnessUpPanel);
+                then:
+                  lambda: |-
+                    // Increase brightness 10%
+                    id(brightness) = id(brightness) + 0.1 > 1 ? 1.0 : id(brightness) + 0.1;
+                    id(backlight).set_level(id(brightness));
+            - if:
+                condition:
+                  lambda: |-
+                    return (lastTouchedPanel == &brightnessDownPanel);
+                then:
+                  lambda: |-
+                    // Decrease brightness 10%
+                    id(brightness) = id(brightness) - 0.1 < 0 ? 0.0 : id(brightness) - 0.1;
+                    id(backlight).set_level(id(brightness));
+            - if:
+                condition:
+                  lambda: |-
+                    return (lastTouchedPanel == &backDoorPanel);
+                then:
+                  - if:
+                      condition:
+                          - binary_sensor.is_on: back_door_autolock
+                      then:
+                        - logger.log: "Back door autolock disabled"
+                        - homeassistant.service:
+                            ##
+                            ## I thought changing ESPHome's binary_sensor.back_door_autolock
+                            ## should have changed the associated input_boolean.keymaster_back_door_autolock
+                            ## but it didn't seem to. Calling the HA service to change the value worked.
+                            ##
+                            service: "input_boolean.turn_off"
+                            data:
+                              entity_id: "input_boolean.keymaster_back_door_autolock"
+                      else:
+                        - logger.log: "Back door autolock enabled"
+                        - homeassistant.service:
+                            service: "input_boolean.turn_on"
+                            data:
+                              entity_id: "input_boolean.keymaster_back_door_autolock"
+            - if:
+                condition:
+                  lambda: |-
+                    return (lastTouchedPanel == &frontDoorPanel);
+                then:
+                  - if:
+                      condition:
+                        - binary_sensor.is_on: front_door_autolock
+                      then:
+                        - logger.log: "Front door autolock disabled"
+                        - homeassistant.service:
+                            service: "input_boolean.turn_off"
+                            data:
+                              entity_id: "input_boolean.keymaster_front_door_autolock"
+                      else:
+                        - logger.log: "Front door autolock enabled"
+                        - homeassistant.service:
+                            service: "input_boolean.turn_on"
+                            data:
+                              entity_id: "input_boolean.keymaster_front_door_autolock"
 
   #
   # CALIBRATION CODE for xpt2046

@@ -7,7 +7,7 @@ esphome:
   includes:
     - room-time-temp.h
   libraries:
-    esphome-display-panel=https://github.com/kdorff/esphome-display-panel.git#v0.0.1
+    esphome-display-panel=https://github.com/kdorff/esphome-display-panel.git#v0.0.13
 
 esp32:
   board: esp32dev
@@ -28,12 +28,6 @@ ota:
 wifi:
   ssid: !secret wifi_ssid
   password: !secret wifi_password
-  fast_connect: true
-  domain: .mylocal
-  manual_ip:
-    static_ip: 192.168.1.179
-    gateway: 192.168.1.1
-    subnet: 255.255.255.0
 
   # Enable fallback hotspot (captive portal) in case wifi connection fails
   ap:
@@ -80,14 +74,14 @@ display:
     update_interval: 1s
     contrast: 1%
     lambda: |-
-      static bool panelsInitialized = 0;
+      static bool panelsInitialized = false;
       if (!panelsInitialized) {
         initializePanels(it);
-        panelsInitialized = 1;
+        panelsInitialized = true;
       }
 
-      updatePanelStates(it);
-      drawPanels(it);
+      updatePanelStates();
+      drawPanels();
 
 sensor:
   ##

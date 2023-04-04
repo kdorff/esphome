@@ -1,5 +1,11 @@
 #include <display-panel.h>
 
+// Last touched page
+DisplayPanel* lastTouchedPanel = NULL;
+
+// The display/lcd we are working with. Defined in initializePanels().
+esphome::display::DisplayBuffer* lcd = NULL;
+
 // For sprintf calls.
 char buffer[25];
 
@@ -18,6 +24,15 @@ DisplayPanel brightnessDownPanel(PW(88), PH(25), PW(12), PH(25));
 DisplayPanel timePanel(0, PH(50), PW(60), PH(50));
 DisplayPanel tempPanel(PW(60), PH(50), PW(40), PH(50));
 
+std::vector<DisplayPanel*> panels = {
+    &backDoorPanel,
+    &frontDoorPanel,
+    &brightnessUpPanel,
+    &brightnessDownPanel,
+    &timePanel,
+    &tempPanel
+};
+
 // Predefined Panel text options
 std::vector<std::string> backDoorOpenText = {"Back", "Door", "Open"};
 std::vector<std::string> backDoorText = {"Back", "Door"};
@@ -27,6 +42,8 @@ std::vector<std::string> brightnessUpText = {"+"};
 std::vector<std::string> brightnessDownText = {"-"};
 
 void initializePanels(esphome::display::DisplayBuffer &display) {
+    lcd = &display;
+
     backDoorPanel.font = font_door;
     backDoorPanel.fontVertOffset = -5;
     backDoorPanel.fontHeightOffset = -5;
@@ -38,10 +55,12 @@ void initializePanels(esphome::display::DisplayBuffer &display) {
     timePanel.color = color_blue;
     timePanel.font = font_time;
     timePanel.textColor = Color::WHITE;
+    timePanel.touchable = false;
 
     tempPanel.color = color_blue;
     tempPanel.font = font_temp;
     tempPanel.textColor = Color::WHITE;;
+    tempPanel.touchable = false;
 
     brightnessUpPanel.text = brightnessUpText;
     brightnessUpPanel.color = color_yellow;
@@ -60,7 +79,7 @@ void initializePanels(esphome::display::DisplayBuffer &display) {
     display.fill(Color::BLACK);
 }
 
-void updatePanelStates(esphome::display::DisplayBuffer &display) {
+void updatePanelStates() {
     //
     // Update configuration for Panels that might have changed.
     //
@@ -106,13 +125,17 @@ void updatePanelStates(esphome::display::DisplayBuffer &display) {
     }
 }
 
-void drawPanels(esphome::display::DisplayBuffer &display) {
-    DisplayPanel::drawAllPanels(display, {
-        backDoorPanel,
-        frontDoorPanel,
-        brightnessUpPanel,
-        brightnessDownPanel,
-        timePanel,
-        tempPanel
-    });
+
+// Draw all of the panels
+void drawPanels() {
+    DisplayPanel::drawAllPanels(*lcd, panels);
+}
+
+// See if one of the enabled, touchable panels on the
+// current page has been touched.
+// lastTouchedPanel will be set to a pointer to the
+// touched panel (or NULL of no panel was found for the coordinates).
+boolean isPanelTouched(int tpX, int tpY) {
+    lastTouchedPanel = DisplayPanel::touchedPanel(panels, tpX, tpY);
+    return lastTouchedPanel != NULL;
 }

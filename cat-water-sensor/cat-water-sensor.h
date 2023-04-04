@@ -1,5 +1,8 @@
 #include <display-panel.h>
 
+// The display/lcd we are working with. Defined in initializePanels().
+esphome::display::DisplayBuffer* lcd = NULL;
+
 // For sprintf calls.
 char buffer[25];
 
@@ -25,10 +28,20 @@ DisplayPanel datePanel(0, TIME_HEIGHT + ALARM_HEIGHT, DATE_WIDTH, DATE_HEIGHT);
 DisplayPanel waterSymbolPanel(TIME_WIDTH, 0, COL_2_WIDTH, COL_2_ROW_HEIGHT);
 DisplayPanel waterPercentPanel(TIME_WIDTH, COL_2_ROW_HEIGHT, COL_2_WIDTH, COL_2_ROW_HEIGHT);
 
+std::vector<DisplayPanel*> panels = {
+    &timePanel,
+    &alarmPanel,
+    &datePanel,
+    &waterSymbolPanel,
+    &waterPercentPanel
+};
+
 std::vector<std::string> waterSymbolText = { "Cat", "H2O" };
 std::vector<std::string> blankText = {};
 
 void initializePanels(esphome::display::DisplayBuffer &display) {
+    lcd = &display;
+
     timePanel.font = font_time;
     timePanel.color = Color::BLACK;
     timePanel.textColor = Color::WHITE;
@@ -52,15 +65,7 @@ void initializePanels(esphome::display::DisplayBuffer &display) {
     waterPercentPanel.text = blankText;
 }
 
-void drawPanels(esphome::display::DisplayBuffer &display) {
-    timePanel.draw(display);
-    alarmPanel.draw(display);
-    datePanel.draw(display);
-    waterSymbolPanel.draw(display);
-    waterPercentPanel.draw(display);
-}
-
-void updatePanelStates(esphome::display::DisplayBuffer &display) {
+void updatePanelStates() {
     // Time      
     auto now = esptime->now();
     int hour = now.hour;
@@ -112,4 +117,9 @@ void updatePanelStates(esphome::display::DisplayBuffer &display) {
         waterSymbolPanel.enabled = false;
         waterPercentPanel.enabled = false;
     }
+}
+
+// Draw all of the panels
+void drawPanels() {
+    DisplayPanel::drawAllPanels(*lcd, panels);
 }
