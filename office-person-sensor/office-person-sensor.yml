@@ -1,0 +1,72 @@
+esphome:
+  name: office-person-sensor
+  friendly_name: "Office Person Sensor"
+
+esp8266:
+  board: esp01_1m
+
+# Enable logging
+logger:
+  level: DEBUG
+  logs:
+    # Hide the frequent polling of the sen21231 sensor
+    sen21231_sensor.sensor: ERROR
+
+# Enable Home Assistant API
+api:
+  encryption:
+    key: !secret office_person_sensor_api_encryption
+
+ota:
+  password: !secret ota_password
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+
+  # Enable fallback hotspot (captive portal) in case wifi connection fails
+  ap:
+    ssid: "office-person-sensor FB Hotspot"
+    password: !secret fallback_wifi_password
+
+captive_portal:
+
+i2c:
+
+binary_sensor:
+  ## Exposed to HA.
+  - id: office_person_sensor
+    name: "Office Person Sensor"
+    platform: template
+    device_class: motion
+
+sensor:
+  ## Not exposed to HA, as it is marked internal
+  - platform: sen21231
+    id: office_person_sensor_raw
+    update_interval: .5s
+    internal: true
+    filters:
+      - lambda: !lambda |-
+          if (x >= 1) {
+            // Person detected
+            if (id(office_person_sensor).state == true) {
+              // Person already detected
+              return {};
+            }
+            // Person was JUST detected
+            id(office_person_sensor).publish_state(true);
+            ESP_LOGD("office_person_senspor_raw", "Person just detected");
+            return {};
+          }
+          else {
+            // No person detected
+            if (id(office_person_sensor).state == false) {
+              // No person is the current state - no change.
+              return {};
+            }
+            // Person was JUST not detected
+            id(office_person_sensor).publish_state(false);
+            ESP_LOGD("office_person_senspor_raw", "Person no longer detected");
+            return {};
+          }
