@@ -87,8 +87,17 @@ sensor:
         // Look for a face appearing or disappearing
         // THIS is the how we control binary_sensor.office_person_sensor
         //
-        if (results.num_faces >= 1) {
-          // Person detected
+        int maxConfidence = 0;
+        for (int i = 0; i < results.num_faces; ++i) {
+          const person_sensor_face_t* face = &results.faces[i];
+          if (face->box_confidence > maxConfidence) {
+            maxConfidence = face->box_confidence;
+          }
+        }
+        if (results.num_faces >= 1 && maxConfidence >= 90) {
+          // Person detected with at least 90% confience.
+          // We'll consider this an actual face.
+          // At less than 90% we'll call it a false positive.
           if (id(office_person_sensor).state == true) {
             // Person already detected
             return {};
