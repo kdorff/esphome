@@ -116,32 +116,4 @@ inline void person_sensor_write_reg(uint8_t reg, uint8_t value) {
     Wire.endTransmission();
 }
 
-
-// void test() {
-//     person_sensor_results_t results = {};
-
-//       // Perform a read action on the I2C address of the sensor to get the
-//       // current face information detected.
-//     if (!person_sensor_read(&results)) {
-//         ESP_LOGD("office_person_sensor", "No person sensor results found on the i2c bus");
-//         return {};
-//     }
-//     else {
-//         ESP_LOGD("office_person_sensor", "********");
-//         ESP_LOGD("office_person_sensor", "%d faces found", results.num_faces);
-//         for (int i = 0; i < results.num_faces; ++i) {
-//             const person_sensor_face_t* face = &results.faces[i];
-//             ESP_LOGD("office_person_sensor", "Face # %d: %d confidence (l=%d, t=%d, r=%d, b=%d) %s", 
-//                 i, 
-//                 face->box_confidence,
-//                 face->box_left,
-//                 face->box_top,
-//                 face->box_right,
-//                 face->box_bottom,
-//                 face->is_facing ? "facing" : "not facing");
-//         }
-//         return {};
-//       }    
-// }
-
 #endif  // INCLUDE_PERSON_SENSOR_H
