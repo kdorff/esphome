@@ -1,6 +1,24 @@
+##
+## office-person-sensor.yaml does not use ESPHome's sen21231 component as I found
+##
+## A. It wasn't working reliably ... detection would flicker frequently. very odd.
+## B. I wanted to have the additional details about the face detection to help debug
+##
+## This code is based on the Arduino code found here: https://github.com/usefulsensors/person_sensor_arduino
+##
+## So far, using the sensor directly seems to have far fewer false-positives and false-negatives.
+
 esphome:
   name: office-person-sensor
   friendly_name: "Office Person Sensor"
+  includes:
+    - person_sensor/person_sensor.h
+  libraries:
+    Wire
+  on_boot:
+    then:
+      - lambda: !lambda |-
+          Wire.begin();
 
 esp8266:
   board: esp01_1m
@@ -8,9 +26,6 @@ esp8266:
 # Enable logging
 logger:
   level: DEBUG
-  logs:
-    # Hide the frequent polling of the sen21231 sensor
-    sen21231_sensor.sensor: ERROR
 
 # Enable Home Assistant API
 api:
@@ -31,8 +46,6 @@ wifi:
 
 captive_portal:
 
-i2c:
-
 binary_sensor:
   ## Exposed to HA.
   - id: office_person_sensor
@@ -41,32 +54,60 @@ binary_sensor:
     device_class: motion
 
 sensor:
-  ## Not exposed to HA, as it is marked internal
-  - platform: sen21231
-    id: office_person_sensor_raw
-    update_interval: .5s
+  ## Exposed to HA.
+  - id: person_sensor_loop
+    platform: template
+    # device_class: motion
+    update_interval: 1s
     internal: true
-    filters:
-      - lambda: !lambda |-
-          if (x >= 1) {
-            // Person detected
-            if (id(office_person_sensor).state == true) {
-              // Person already detected
-              return {};
-            }
-            // Person was JUST detected
-            id(office_person_sensor).publish_state(true);
-            ESP_LOGD("office_person_senspor_raw", "Person just detected");
+    lambda: !lambda |-
+      person_sensor_results_t results = {};
+
+      // Perform a read action on the I2C address of the sensor to get the
+      // current face information detected.
+      if (!person_sensor_read(&results)) {
+        ESP_LOGE("person_sensor_loop", "No person sensor results found on the i2c bus");
+        return {};
+      }
+      else {
+        //
+        // Log some debugging details from the sensor
+        //
+        ESP_LOGD("person_sensor_loop", "********");
+        ESP_LOGD("person_sensor_loop", "%d faces found", results.num_faces);
+        for (int i = 0; i < results.num_faces; ++i) {
+          const person_sensor_face_t* face = &results.faces[i];
+          ESP_LOGD("person_sensor_loop", "Face # %d: %d confidence (l=%d, t=%d, r=%d, b=%d) %s", 
+            i, face->box_confidence,
+            face->box_left, face->box_top, face->box_right, face->box_bottom,
+            face->is_facing ? "facing" : "not facing");
+        }
+
+        //
+        // Look for a face appearing or disappearing
+        // THIS is the how we control binary_sensor.office_person_sensor
+        //
+        if (results.num_faces >= 1) {
+          // Person detected
+          if (id(office_person_sensor).state == true) {
+            // Person already detected
             return {};
           }
-          else {
-            // No person detected
-            if (id(office_person_sensor).state == false) {
-              // No person is the current state - no change.
-              return {};
-            }
-            // Person was JUST not detected
-            id(office_person_sensor).publish_state(false);
-            ESP_LOGD("office_person_senspor_raw", "Person no longer detected");
+          // Person was JUST detected
+          id(office_person_sensor).publish_state(true);
+          ESP_LOGD("person_sensor_loop", "Person just detected");
+          return {};
+        }
+        else {
+          // No person detected
+          if (id(office_person_sensor).state == false) {
+            // No person is the current state - no change.
             return {};
           }
+          // Person was JUST not detected
+          id(office_person_sensor).publish_state(false);
+          ESP_LOGD("person_sensor_loop", "Person no longer detected");
+          return {};
+        }
+      }
+ 
