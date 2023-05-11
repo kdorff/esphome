@@ -2,7 +2,7 @@ esphome:
   name: bcd-led-clock
   friendly_name: bcd-led-clock
   includes:
-    - bcd_lcd_clock.h
+    - bcd_led_clock.h
   on_boot:
     - then:
       - light.control:
