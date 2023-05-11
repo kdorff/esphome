@@ -1,0 +1,103 @@
+esphome:
+  name: bcd-led-clock
+  friendly_name: bcd-led-clock
+  includes:
+    - bcd_lcd_clock.h
+  on_boot:
+    - then:
+      - light.control:
+          id: bcd_led_strip
+          effect: BCD Clock
+          state: Off
+
+esp32:
+  board: esp32dev
+  framework:
+    type: arduino
+
+# Enable logging
+logger:
+
+# Enable Home Assistant API
+api:
+  encryption:
+    key: !secret bcd_led_clock_api_encryption
+
+ota:
+  password: !secret ota_password
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+
+  # Enable fallback hotspot (captive portal) in case wifi connection fails
+  ap:
+    ssid: "bcd-led-clock Fallback Hotspot"
+    password: !secret fallback_wifi_password
+
+captive_portal:
+
+# Pull time from Home Assistant
+time:
+  - platform: homeassistant
+    id: homeassistant_time
+    on_time_sync:
+      then:
+        # Once we have time sync, turn on the strip and set the effect.
+        - light.control:
+            id: bcd_led_strip
+            effect: BCD Clock
+            state: On
+            brightness: 50%
+
+light:
+  - platform: neopixelbus
+    type: GRB
+    variant: WS2812X
+    pin: 16
+    num_leds: 20
+    name: "BCD LED Strip"
+    id: bcd_led_strip
+    effects:
+      - addressable_lambda:
+          name: BCD Clock
+          update_interval: 1s
+          lambda: |-
+            // Color to display
+            static Color red = Color(255, 0, 0);
+            static Color green = Color(0, 255, 0);
+            static Color blue = Color(0, 0, 255);
+            static Color offColor = Color::BLACK;
+
+            // Get the current time
+            int hour = id(homeassistant_time).now().hour % 12;
+            if (hour == 0) {
+              hour = 12;
+            }
+            int minutes = id(homeassistant_time).now().minute;
+            int seconds = id(homeassistant_time).now().second;
+
+            // Create the BCDs for the current time
+            std::vector<std::bitset<4>> hoursBCD = dec_to_bin(hour);
+            std::vector<std::bitset<4>> minutesBCD = dec_to_bin(minutes);
+            std::vector<std::bitset<4>> secondsBCD = dec_to_bin(seconds);
+
+            // Clear the strip.
+            it.all() = offColor;
+
+            // Set the time
+            setLEDGroup(it, 
+              hoursBCD, 
+              HOURS_COL_0_START, HOURS_COL_0_COUNT, 
+              HOURS_COL_1_START, HOURS_COL_1_COUNT, 
+              red);
+            setLEDGroup(it, 
+              minutesBCD, 
+              MINUTES_COL_0_START, MINUTES_COL_0_COUNT, 
+              MINUTES_COL_1_START, MINUTES_COL_1_COUNT, 
+              green);
+            setLEDGroup(it, 
+              secondsBCD, 
+              SECONDS_COL_0_START, SECONDS_COL_0_COUNT, 
+              SECONDS_COL_1_START, SECONDS_COL_1_COUNT, 
+              blue);
