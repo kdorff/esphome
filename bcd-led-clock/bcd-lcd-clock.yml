@@ -1,0 +1,105 @@
+esphome:
+  name: bcd-led-clock
+  friendly_name: bcd-led-clock
+  includes:
+    - bcd_lcd_clock.h
+
+esp32:
+  board: esp32dev
+  framework:
+    type: arduino
+
+# Enable logging
+logger:
+
+# Enable Home Assistant API
+api:
+  encryption:
+    key: !secret bcd_led_clock_api_encryption
+
+ota:
+  password: !secret ota_password
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+
+  # Enable fallback hotspot (captive portal) in case wifi connection fails
+  ap:
+    ssid: "bcd-led-clock Fallback Hotspot"
+    password: !secret fallback_wifi_password
+
+captive_portal:
+
+# Pull time from Home Assistant
+time:
+  - platform: homeassistant
+    id: homeassistant_time
+    on_time_sync:
+      then:
+        # Once we have time sync, turn on the strip and set the effect.
+        - light.control:
+            id: bcd_led_strip
+            effect: BCD Clock
+            state: On
+            brightness: 50%
+
+light:
+  - platform: neopixelbus
+    type: GRB
+    variant: WS2812X
+    pin: 16
+    num_leds: 20
+    name: "BCD LED Strip"
+    id: bcd_led_strip
+    effects:
+      - addressable_lambda:
+          name: BCD Clock
+          update_interval: 1s
+          lambda: |-
+            // Color to display
+            static Color onColor = Color(255, 0, 0);
+
+            // Get the current Hours
+            uint8_t hour = id(homeassistant_time).now().hour % 12;
+            if (hour == 0) {
+              hour = 12;
+            }
+            std::vector<std::bitset<4>> hoursBCD = dec_to_bin(hour);
+
+            // Get the current Minutes
+            uint8_t minute = id(homeassistant_time).now().minute;
+            std::vector<std::bitset<4>> minutesBCD = dec_to_bin(minute);
+
+            // Get the current Seconds
+            uint8_t second = id(homeassistant_time).now().second;
+            std::vector<std::bitset<4>> secondsBCD = dec_to_bin(second);
+
+            // Reset the strip to black.
+            // This may not be ideal, but given our 1 second updates, I think this is fine.
+            // for at least a first pass.
+            it.all() = Color::BLACK;
+
+            if (hoursBCD.size() == 1) {
+              turnOnLEDs(it, hoursBCD[0], HOURS_COL_1_START, HOURS_COL_1_COUNT, onColor);
+            }
+            else {
+              turnOnLEDs(it, hoursBCD[0], HOURS_COL_0_START, HOURS_COL_0_COUNT, onColor);
+              turnOnLEDs(it, hoursBCD[1], HOURS_COL_1_START, HOURS_COL_1_COUNT, onColor);
+            }
+
+            if (minutesBCD.size() == 1) {
+              turnOnLEDs(it, minutesBCD[0], MINUTES_COL_1_START, MINUTES_COL_1_COUNT, onColor);
+            }
+            else {
+              turnOnLEDs(it, minutesBCD[0], MINUTES_COL_0_START, MINUTES_COL_0_COUNT, onColor);
+              turnOnLEDs(it, minutesBCD[1], MINUTES_COL_1_START, MINUTES_COL_1_COUNT, onColor);
+            }
+
+            if (secondsBCD.size() == 1) {
+              turnOnLEDs(it, secondsBCD[0], SECONDS_COL_1_START, SECONDS_COL_1_COUNT, onColor);
+            }
+            else {
+              turnOnLEDs(it, secondsBCD[0], SECONDS_COL_0_START, SECONDS_COL_0_COUNT, onColor);
+              turnOnLEDs(it, secondsBCD[1], SECONDS_COL_1_START, SECONDS_COL_1_COUNT, onColor);
+            }
