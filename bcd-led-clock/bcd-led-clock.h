@@ -9,7 +9,7 @@ Color offColor = Color::BLACK;
 /**
  * Should we flicker the colors (candle-esque)?
  */
-bool flickr = true;
+bool flickr = false;
 
 /**
  * The led strip positions for the hours, minutes, and seconds columns.
