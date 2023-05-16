@@ -1,21 +1,15 @@
+
 /**
- * The LED Number (_START) and number of LEDs (_COUNT) for
- * each of the Hours, Minutes, and Seconds columns.
+ * The matrix positions for the hours, minutes, and seconds columns.
  */
-#define HOURS_COL_0_START 0
-#define HOURS_COL_0_COUNT 2
-#define HOURS_COL_1_START 2
-#define HOURS_COL_1_COUNT 4
+std::vector<int> matrixHoursCol0 = {0, 11};
+std::vector<int> matrixHoursCol1 = {1, 10, 13, 22};
 
-#define MINUTES_COL_0_START 6
-#define MINUTES_COL_0_COUNT 3
-#define MINUTES_COL_1_START 9
-#define MINUTES_COL_1_COUNT 4
+std::vector<int> matrixMinsCol0 = {2, 9, 14};
+std::vector<int> matrixMinsCol1 = {3, 8, 15, 20};
 
-#define SECONDS_COL_0_START 13
-#define SECONDS_COL_0_COUNT 3
-#define SECONDS_COL_1_START 16
-#define SECONDS_COL_1_COUNT 4
+std::vector<int> matrixSecsCol0 = {4, 7, 16};
+std::vector<int> matrixSecsCol1 = {5, 6, 17, 18};
 
 #define BIT_TO_INT(x) (x == 0) ? ((int) 0) : ((int) 1)
 
@@ -40,10 +34,10 @@ std::vector<std::bitset<4>> dec_to_bin(int n) {
 /**
  * Set the "on" LEDs for one column of the clock display.
  */
-void setBCDLEDs(esphome::light::AddressableLight &lights, std::bitset<4> &bits, int startLED, int numLEDs, Color &color) {
-    for (int i = 0; i < numLEDs; i++) {
+void setBCDLEDs(esphome::light::AddressableLight &lights, std::bitset<4> &bits, std::vector<int> &col, Color &color) {
+    for (int i = 0; i < col.size(); i++) {
         if (bits[i] != 0) {
-            lights[startLED + i] = color;
+            lights[col[i]] = color;
         }
     }
 }
@@ -54,14 +48,14 @@ void setBCDLEDs(esphome::light::AddressableLight &lights, std::bitset<4> &bits, 
 void setLEDGroup(
         esphome::light::AddressableLight &lights, 
         std::vector<std::bitset<4>> &bcd, 
-        int col0StartLED, int col0NumLEDs, 
-        int col1StartLED, int col1NumLEDs, 
+        std::vector<int> &matrixCol0, 
+        std::vector<int> &matrixCol1, 
         Color &color) {
     if (bcd.size() == 1) {
-        setBCDLEDs(lights, bcd[0], col1StartLED, col1NumLEDs, color);
+        setBCDLEDs(lights, bcd[0], matrixCol1, color);
     }
     else if (bcd.size() == 2) {
-        setBCDLEDs(lights, bcd[0], col0StartLED, col0NumLEDs, color);
-        setBCDLEDs(lights, bcd[1], col1StartLED, col1NumLEDs, color);
+        setBCDLEDs(lights, bcd[0], matrixCol0, color);
+        setBCDLEDs(lights, bcd[1], matrixCol1, color);
     }
 }

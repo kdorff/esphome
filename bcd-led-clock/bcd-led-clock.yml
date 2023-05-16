@@ -7,8 +7,9 @@ esphome:
     - then:
       - light.control:
           id: bcd_led_strip
-          effect: BCD Clock
-          state: Off
+          effect:  Rainbow
+          state: On
+          brightness: 50%
 
 esp32:
   board: esp32dev
@@ -46,19 +47,20 @@ time:
         # Once we have time sync, turn on the strip and set the effect.
         - light.control:
             id: bcd_led_strip
-            effect: BCD Clock
+            effect:  BCD Clock
             state: On
-            brightness: 50%
 
 light:
   - platform: neopixelbus
     type: GRB
     variant: WS2812X
     pin: 16
-    num_leds: 20
+    num_leds: 24
     name: "BCD LED Strip"
     id: bcd_led_strip
     effects:
+      - addressable_rainbow:
+          name: Rainbow
       - addressable_lambda:
           name: BCD Clock
           update_interval: 1s
@@ -88,16 +90,13 @@ light:
             // Set the time
             setLEDGroup(it, 
               hoursBCD, 
-              HOURS_COL_0_START, HOURS_COL_0_COUNT, 
-              HOURS_COL_1_START, HOURS_COL_1_COUNT, 
+              matrixHoursCol0, matrixHoursCol1, 
               red);
             setLEDGroup(it, 
               minutesBCD, 
-              MINUTES_COL_0_START, MINUTES_COL_0_COUNT, 
-              MINUTES_COL_1_START, MINUTES_COL_1_COUNT, 
+              matrixMinsCol0, matrixMinsCol1,
               green);
             setLEDGroup(it, 
               secondsBCD, 
-              SECONDS_COL_0_START, SECONDS_COL_0_COUNT, 
-              SECONDS_COL_1_START, SECONDS_COL_1_COUNT, 
+              matrixSecsCol0, matrixSecsCol1,
               blue);
