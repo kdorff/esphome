@@ -7,6 +7,11 @@ Color blue = Color(0, 0, 255);
 Color offColor = Color::BLACK;
 
 /**
+ * Should we flicker the colors (candle-esque)?
+ */
+bool flickr = true;
+
+/**
  * The led strip positions for the hours, minutes, and seconds columns.
  */
 std::vector<int> ledStripHoursCol0 = {0, 11};
@@ -47,18 +52,19 @@ void setBCDLEDs(esphome::light::AddressableLight &lights, std::bitset<4> &bits, 
             // The below code will "shimmer", sort of.
             // This looked nice paired with 100ms update.
             // Returns 128-255
-            int subcolor = 225 + (rand() % 30);
-            Color drawColor = red;
-            if (color == red) {
-                drawColor = Color(subcolor, 0, 0);
+            Color drawColor = color;
+            if (flickr) {
+                int subcolor = 225 + (rand() % 30);
+                if (color == red) {
+                    drawColor = Color(subcolor, 0, 0);
+                }
+                else if (color == green) {
+                    drawColor = Color(0, subcolor, 0);
+                }
+                else if (color == blue) {
+                    drawColor = Color(0, 0, subcolor);
+                }
             }
-            else if (color == green) {
-                drawColor = Color(0, subcolor, 0);
-            }
-            else if (color == blue) {
-                drawColor = Color(0, 0, subcolor);
-            }
-
             lights[col[i]] = drawColor;
         }
     }
