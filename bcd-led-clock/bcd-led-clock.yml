@@ -63,14 +63,9 @@ light:
           name: Rainbow
       - addressable_lambda:
           name: BCD Clock
-          update_interval: 1s
+          update_interval: 100ms
+          ## or 1s
           lambda: |-
-            // Color to display
-            static Color red = Color(255, 0, 0);
-            static Color green = Color(0, 255, 0);
-            static Color blue = Color(0, 0, 255);
-            static Color offColor = Color::BLACK;
-
             // Get the current time
             int hour = id(homeassistant_time).now().hour % 12;
             if (hour == 0) {
@@ -90,13 +85,13 @@ light:
             // Set the time
             setLEDGroup(it, 
               hoursBCD, 
-              matrixHoursCol0, matrixHoursCol1, 
+              ledStripHoursCol0, ledStripHoursCol1, 
               red);
             setLEDGroup(it, 
               minutesBCD, 
-              matrixMinsCol0, matrixMinsCol1,
+              ledStripMinsCol0, ledStripMinsCol1,
               green);
             setLEDGroup(it, 
               secondsBCD, 
-              matrixSecsCol0, matrixSecsCol1,
+              ledStripSecsCol0, ledStripSecsCol1,
               blue);
