@@ -7,9 +7,11 @@ Color blue = Color(0, 0, 255);
 Color offColor = Color::BLACK;
 
 /**
- * Should we flicker the colors (candle-esque)?
+ * Enable / Disable Effects.
+ * --------------------------
  */
-bool flickr = false;
+// Flicker (candle-esque).
+bool effectFlickrEnabled = false;
 
 /**
  * The led strip positions for the hours, minutes, and seconds columns.
@@ -38,6 +40,21 @@ std::vector<std::bitset<4>> dec_to_bin(int n) {
     return repr;
 }
 
+Color effectFlickr(esphome::light::AddressableLight &lights, int ledStripPosition, Color &color) {
+    Color effectColor = color;
+    int subcolor = 225 + (rand() % 30);
+    if (color == red) {
+        effectColor = Color(subcolor, 0, 0);
+    }
+    else if (color == green) {
+        effectColor = Color(0, subcolor, 0);
+    }
+    else if (color == blue) {
+        effectColor = Color(0, 0, subcolor);
+    }
+    return effectColor;
+}
+
 /**
  * Set the "on" LEDs for one column of the clock display.
  */
@@ -47,20 +64,12 @@ void setBCDLEDs(esphome::light::AddressableLight &lights, std::bitset<4> &bits, 
             // The below code will "shimmer", sort of.
             // This looked nice paired with 100ms update.
             // Returns 128-255
+            int ledStripPosition = ledStripColumn[i];
             Color drawColor = color;
-            if (flickr) {
-                int subcolor = 225 + (rand() % 30);
-                if (color == red) {
-                    drawColor = Color(subcolor, 0, 0);
-                }
-                else if (color == green) {
-                    drawColor = Color(0, subcolor, 0);
-                }
-                else if (color == blue) {
-                    drawColor = Color(0, 0, subcolor);
-                }
+            if (effectFlickrEnabled) {
+                drawColor = effectFlickr(lights, ledStripPosition, color);
             }
-            lights[ledStripColumn[i]] = drawColor;
+            lights[ledStripPosition] = drawColor;
         }
     }
 }
