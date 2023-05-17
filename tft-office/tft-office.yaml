@@ -69,7 +69,7 @@ wifi:
 # bluetooth_proxy:
 #  active: true
 
-# Enable logging
+# Enable logging - at DEBUG by default.
 logger:
 
 color:
@@ -161,9 +161,13 @@ display:
 
 touchscreen:
   platform: xpt2046
-  id: touch
+  ## Do not give this an `id` of `touch` as that appears to clash with something
+  ## internal to the touchscreen component.
+  id: touchid
   cs_pin: 32
-  interrupt_pin: 21
+  # ResinChem Tech found using interrupt_pin to be unreliable. While
+  # I didn't have these issues, I find it works fine without it.
+  #interrupt_pin: 21
   swap_x_y: false
   calibration_x_min: 426
   calibration_x_max: 3771
@@ -174,14 +178,15 @@ touchscreen:
   report_interval: 200ms
   on_touch:
     then:
-      # - lambda: |-
-      #     ESP_LOGD("ili9341-touch", "x=%d, y=%d",
-      #         (id(touch)).x,
-      #         (id(touch)).y);
+      - lambda: |-
+          // This can be used to help calibrate the device.
+          // See https://esphome.io/components/touchscreen/xpt2046.html#calibration
+          ESP_LOGD("yaml", "touched (x=%d, y=%d), (x_raw=%d, y_raw=%d)", 
+            id(touchid).x, id(touchid).y, id(touchid).x_raw, id(touchid).y_raw);
       - if:
           condition:
             lambda: |-
-              return isPanelTouched((id(touch)).x, (id(touch)).y);
+              return isPanelTouched(id(touchid).x, id(touchid).y);
           then:
             - lambda: |-
                 ESP_LOGD("yaml", "touched name=%s", (lastTouchedPanel->name.c_str()));

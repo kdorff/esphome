@@ -225,7 +225,6 @@ void updatePanelStates() {
     }
 }
 
-
 // Draw all of the panels
 void drawPanels() {
     // drawAllPanels is generally preferred
