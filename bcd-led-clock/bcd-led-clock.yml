@@ -83,15 +83,6 @@ light:
             it.all() = offColor;
 
             // Set the time
-            setLEDGroup(it, 
-              hoursBCD, 
-              ledStripHoursCol0, ledStripHoursCol1, 
-              red);
-            setLEDGroup(it, 
-              minutesBCD, 
-              ledStripMinsCol0, ledStripMinsCol1,
-              green);
-            setLEDGroup(it, 
-              secondsBCD, 
-              ledStripSecsCol0, ledStripSecsCol1,
-              blue);
+            setLEDGroup(it, hoursBCD, ledStripHoursColumns, red);
+            setLEDGroup(it, minutesBCD, ledStripMinutesColumns, green);
+            setLEDGroup(it, secondsBCD, ledStripSecondsColumns, blue);

@@ -14,14 +14,9 @@ bool flickr = false;
 /**
  * The led strip positions for the hours, minutes, and seconds columns.
  */
-std::vector<int> ledStripHoursCol0 = {0, 11};
-std::vector<int> ledStripHoursCol1 = {1, 10, 13, 22};
-
-std::vector<int> ledStripMinsCol0 = {2, 9, 14};
-std::vector<int> ledStripMinsCol1 = {3, 8, 15, 20};
-
-std::vector<int> ledStripSecsCol0 = {4, 7, 16};
-std::vector<int> ledStripSecsCol1 = {5, 6, 17, 18};
+std::vector<std::vector<int>> ledStripHoursColumns = { {0, 11}, {1, 10, 13, 22} };
+std::vector<std::vector<int>> ledStripMinutesColumns = { {2, 9, 14}, {3, 8, 15, 20} };
+std::vector<std::vector<int>> ledStripSecondsColumns = { {4, 7, 16}, {5, 6, 17, 18} };
 
 #define BIT_TO_INT(x) (x == 0) ? ((int) 0) : ((int) 1)
 
@@ -46,8 +41,8 @@ std::vector<std::bitset<4>> dec_to_bin(int n) {
 /**
  * Set the "on" LEDs for one column of the clock display.
  */
-void setBCDLEDs(esphome::light::AddressableLight &lights, std::bitset<4> &bits, std::vector<int> &col, Color &color) {
-    for (int i = 0; i < col.size(); i++) {
+void setBCDLEDs(esphome::light::AddressableLight &lights, std::bitset<4> &bits, std::vector<int> &ledStripColumn, Color &color) {
+    for (int i = 0; i < bits.size(); i++) {
         if (bits[i] != 0) {
             // The below code will "shimmer", sort of.
             // This looked nice paired with 100ms update.
@@ -65,7 +60,7 @@ void setBCDLEDs(esphome::light::AddressableLight &lights, std::bitset<4> &bits, 
                     drawColor = Color(0, 0, subcolor);
                 }
             }
-            lights[col[i]] = drawColor;
+            lights[ledStripColumn[i]] = drawColor;
         }
     }
 }
@@ -76,14 +71,13 @@ void setBCDLEDs(esphome::light::AddressableLight &lights, std::bitset<4> &bits, 
 void setLEDGroup(
         esphome::light::AddressableLight &lights, 
         std::vector<std::bitset<4>> &bcd, 
-        std::vector<int> &ledStripCol0, 
-        std::vector<int> &ledStripCol1, 
+        std::vector<std::vector<int>> &ledStripColums,
         Color &color) {
     if (bcd.size() == 1) {
-        setBCDLEDs(lights, bcd[0], ledStripCol1, color);
+        setBCDLEDs(lights, bcd[0], ledStripColums[1], color);
     }
     else if (bcd.size() == 2) {
-        setBCDLEDs(lights, bcd[0], ledStripCol0, color);
-        setBCDLEDs(lights, bcd[1], ledStripCol1, color);
+        setBCDLEDs(lights, bcd[0], ledStripColums[0], color);
+        setBCDLEDs(lights, bcd[1], ledStripColums[1], color);
     }
 }
