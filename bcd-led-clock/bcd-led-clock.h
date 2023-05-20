@@ -14,6 +14,9 @@ Color black = Color(0, 0, 0);
 #define NUM_ROWS 4
 #define NUM_COLUMNS 6
 
+/**
+ * Helper to convert a bit to an int (useful for printf, etc.).
+ */
 #define BIT_TO_INT(x) (x == 0) ? ((int) 0) : ((int) 1)
 
 /**
@@ -71,7 +74,6 @@ class PixelPosition {
     }
 
     /**
-     * Constructor.
      * Find the position for a known row and column.
      * Compensate for the serpentine LED path.
      */
@@ -96,6 +98,7 @@ class PixelPosition {
     }
 
     /**
+     * Constructor.
      * Create a PixelPosition based on a known row and column.
      * The (linear) position will be calculated.
      */
