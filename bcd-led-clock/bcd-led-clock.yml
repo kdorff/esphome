@@ -9,7 +9,7 @@ esphome:
           id: bcd_led_strip
           effect:  Rainbow
           state: On
-          brightness: 50%
+          brightness: 70%
 
 esp32:
   board: esp32dev
@@ -63,9 +63,11 @@ light:
           name: Rainbow
       - addressable_lambda:
           name: BCD Clock
-          update_interval: 100ms
-          ## or 1s
+          update_interval: 1s
           lambda: |-
+            if (initial_run) {
+              effectBleedEnabled = true;
+            }
             // Get the current time
             int hour = id(homeassistant_time).now().hour % 12;
             if (hour == 0) {
@@ -74,15 +76,19 @@ light:
             int minutes = id(homeassistant_time).now().minute;
             int seconds = id(homeassistant_time).now().second;
 
+            // Set a specific time for testing
+            // hour = 12;
+            // minutes = 48;
+            // seconds = 48;
+
             // Create the BCDs for the current time
             std::vector<std::bitset<4>> hoursBCD = dec_to_bin(hour);
             std::vector<std::bitset<4>> minutesBCD = dec_to_bin(minutes);
             std::vector<std::bitset<4>> secondsBCD = dec_to_bin(seconds);
 
-            // Clear the strip.
-            it.all() = offColor;
-
             // Set the time
+            startDrawTime(it);
             setLEDGroup(it, hoursBCD, ledStripHoursColumns, red);
             setLEDGroup(it, minutesBCD, ledStripMinutesColumns, green);
             setLEDGroup(it, secondsBCD, ledStripSecondsColumns, blue);
+            endDrawTime(it);
