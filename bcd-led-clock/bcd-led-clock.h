@@ -28,12 +28,13 @@ EffectBleed effectBleed;
 EffectFlicker effectFlicker;
 
 /**
- * TODO: How to use this? I get linking errors if I try to iterate this.
- * TODO: instead of using the effects directly.
+ * TODO: Why doesn't this work?
+ * TODO: I've tried making it std::vector<Effect>, too. 
+ * TODO: I'm not yet sure how to do this in C++.
  */
-std::vector<Effect> allEffects = {
-    effectBleed,
-    effectFlicker
+std::vector<Effect*> allEffects = {
+    &effectFlicker,
+    &effectBleed
 };
 
 /**
@@ -82,6 +83,12 @@ void setPixels(esphome::light::AddressableLight &lights, std::vector<PixelPositi
 }
 
 /**
+ * Initialize the BCD LED clock. Should only be called. once.
+ */
+void initialize(esphome::light::AddressableLight &lights) {
+}
+
+/**
  * Start drawing time.
  */
 void startDrawTime(esphome::light::AddressableLight &lights) {
@@ -91,6 +98,12 @@ void startDrawTime(esphome::light::AddressableLight &lights) {
     for (int i = 0; i < NUM_ROWS * NUM_COLUMNS; i++) {
         pixelsSet[i] = false;
     }
+    // TODO: Why doesn't this work?
+    // for (Effect *effect : allEffects) {
+    //     if (effect->enabled) {
+    //         effect->pre(lights);
+    //     }
+    // }
     if (effectBleed.enabled) {
         effectBleed.pre(lights);
     }
@@ -108,6 +121,12 @@ void setBCDLEDs(esphome::light::AddressableLight &lights, std::bitset<4> &bits, 
             int ledStripPosition = ledStripColumn[i];
             Color drawColor = color;
 
+            // TODO: Why doesn't this work?
+            // for (Effect *effect : allEffects) {
+            //     if (effect->enabled) {
+            //         drawColor = effect->recolorPixel(lights, ledStripPosition, color);
+            //     }
+            // }
             if (effectBleed.enabled) {
                 drawColor = effectBleed.recolorPixel(lights, ledStripPosition, color);
             }
@@ -140,6 +159,13 @@ void setLEDGroup(
  * Complete drawing time.
  */
 void endDrawTime(esphome::light::AddressableLight &lights) {
+    // TODO: Why doesn't this work?
+    // for (Effect *effect : allEffects) {
+    //     if (effect->enabled) {
+    //         std::vector<PixelPosition> changedPixels = effect->post(lights, pixelsSet);
+    //         setPixels(lights, changedPixels);
+    //     }
+    // }
     if (effectBleed.enabled) {
         std::vector<PixelPosition> changedPixels = effectBleed.post(lights, pixelsSet);
         setPixels(lights, changedPixels);

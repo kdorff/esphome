@@ -67,6 +67,7 @@ light:
           update_interval: 100ms
           lambda: |-
             if (initial_run) {
+              initialize(it);
               effectFlicker.enabled = true;
               effectBleed.enabled = true;
             }

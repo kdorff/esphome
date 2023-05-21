@@ -18,7 +18,7 @@ class EffectFlicker : public Effect {
     Color recolorPixel(esphome::light::AddressableLight &lights, int ledStripPosition, Color &color) {
         // The below code will "shimmer", sort of.
         Color effectColor = color;
-        // Returns 225-255
+        // Vary the color between (255-flickerSize) and 255
         int subcolor = (255 - flickerSize) + (rand() % flickerSize);
         if (color == Color(255, 0, 0)) {
             effectColor = Color(subcolor, 0, 0);

@@ -3,6 +3,9 @@
 
 #include "pixel_position.h"
 
+/**
+ * Base Effect and including utility methods.
+ */
 class Effect {
     public:
     bool enabled = false;
@@ -24,7 +27,7 @@ class Effect {
       * Given the list of pixelPositions on lights, return a Color that is
       * the average of pixels colors.
       */
-    Color averageColors(esphome::light::AddressableLight &lights, std::vector<PixelPosition> &pixelPositions) {
+    static Color averageColors(esphome::light::AddressableLight &lights, std::vector<PixelPosition> &pixelPositions) {
         int count = 0;
         int redSum = 0;
         int greenSum = 0;
