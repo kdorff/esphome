@@ -6,7 +6,7 @@
 #define NUM_ROWS 4
 #define NUM_COLUMNS 6
 
-#include "bcd_led_clock/pixel_position.h"
+#include "bcd_led_clock/matrix_pixel.h"
 #include "bcd_led_clock/effect_bleed.h"
 #include "bcd_led_clock/effect_flicker.h"
 
@@ -68,15 +68,15 @@ std::vector<std::vector<int>> ledStripSecondsColumns = { {4, 7, 16}, {5, 6, 17, 
 /**
  * Set the color for one pixel.
  */
-void setPixel(esphome::light::AddressableLight &lights, int ledStripPosition, Color &color) {
-    lights[ledStripPosition] = color;
-    pixelsSet[ledStripPosition] = true;
-    // ESP_LOGD("setPixel", "p=%d -> (r=%d, g=%d, b=%d)", ledStripPosition, color.red, color.green, color.blue);
+void setPixel(esphome::light::AddressableLight &lights, MatrixPixel matrixPixel) {
+    lights[matrixPixel.position] = matrixPixel.color;
+    pixelsSet[matrixPixel.position] = true;
+    // ESP_LOGD("setPixel", "p=%d -> (r=%d, g=%d, b=%d)", matrixPixel.position, matrixPixel.color.red, matrixPixel.color.green, matrixPixel.color.blue);
 }
 
-void setPixels(esphome::light::AddressableLight &lights, std::vector<PixelPosition> pixelPositions) {
-    for (PixelPosition pp : pixelPositions) {
-        setPixel(lights, pp.position, pp.color);
+void setPixels(esphome::light::AddressableLight &lights, std::vector<MatrixPixel> matrixPixels) {
+    for (MatrixPixel matrixPixel : matrixPixels) {
+        setPixel(lights, matrixPixel);
     }
 }
 
@@ -110,16 +110,15 @@ void startDrawTime(esphome::light::AddressableLight &lights) {
 void setBCDLEDs(esphome::light::AddressableLight &lights, std::bitset<4> &bits, std::vector<int> &ledStripColumn, Color &color) {
     for (int i = 0; i < bits.size(); i++) {
         if (bits[i] != 0) {
-            int ledStripPosition = ledStripColumn[i];
-            Color drawColor = color;
-
+            MatrixPixel matrixPixel = MatrixPixel(ledStripColumn[i]);
+            matrixPixel.color = color;
             for (auto effect : allEffects) {
                 if (effect->enabled) {
                     // ESP_LOGD("setBCDLEDs", "n=%s e=%d", effect->name.c_str(), effect->enabled);
-                    drawColor = effect->recolorPixel(lights, ledStripPosition, drawColor);
+                    matrixPixel.color = effect->recolorPixel(lights, matrixPixel);
                 }
             }
-            setPixel(lights, ledStripPosition, drawColor);
+            setPixel(lights, matrixPixel);
         }
     }
 }
@@ -147,7 +146,7 @@ void setLEDGroup(
 void endDrawTime(esphome::light::AddressableLight &lights) {
     for (auto effect : allEffects) {
         if (effect->enabled) {
-            std::vector<PixelPosition> changedPixels = effect->post(lights, pixelsSet);
+            std::vector<MatrixPixel> changedPixels = effect->post(lights, pixelsSet);
             // ESP_LOGD("endDrawTime", "n=%s e=%d changed=%d", effect->name.c_str(), effect->enabled, changedPixels.size());
             setPixels(lights, changedPixels);
         }

@@ -16,10 +16,10 @@ class EffectBleed : public Effect {
         name = "Bleed";
     }
 
-    Color selectBleedColor(std::vector<PixelPosition> consider) {
-        for (PixelPosition pp : consider) {
-            if (pp.onMatrix) {
-                Color color = pp.color;
+    Color selectBleedColor(std::vector<MatrixPixel> consider) {
+        for (MatrixPixel mp : consider) {
+            if (mp.onMatrix) {
+                Color color = mp.color;
                 if ((color.red + color.green + color.blue) > 0) {
                     return Color(
                         round(color.red * bleedRedFactor) ,
@@ -35,18 +35,18 @@ class EffectBleed : public Effect {
     /**
      * Bleed effect: Post method.
      */
-    std::vector<PixelPosition> post(esphome::light::AddressableLight &lights, std::vector<bool> &pixelsSet) override {
-        std::vector<PixelPosition> bleedPixels;
+    std::vector<MatrixPixel> post(esphome::light::AddressableLight &lights, std::vector<bool> &pixelsSet) override {
+        std::vector<MatrixPixel> bleedPixels;
         for (int c = 0; c < NUM_COLUMNS; c++) {
             for (int r = 0; r < NUM_ROWS; r++) {
-                PixelPosition base = PixelPosition(r, c);
+                MatrixPixel base = MatrixPixel(r, c);
                 if (!pixelsSet[base.position]) {
                     // Find the bleed color considering the adjacent pixels.
-                    std::vector<PixelPosition> pixelPositionsToConsider = {
-                        PixelPosition(lights, base.row + 1, base.column),
-                        PixelPosition(lights, base.row - 1, base.column),
-                        PixelPosition(lights, base.row, base.column - 1),
-                        PixelPosition(lights, base.row, base.column + 1),
+                    std::vector<MatrixPixel> pixelPositionsToConsider = {
+                        MatrixPixel(lights, base.row + 1, base.column),
+                        MatrixPixel(lights, base.row - 1, base.column),
+                        MatrixPixel(lights, base.row, base.column - 1),
+                        MatrixPixel(lights, base.row, base.column + 1),
                     };
                     base.color = selectBleedColor(pixelPositionsToConsider);
                     if ((base.color.red + base.color.green + base.color.blue) != 0) {

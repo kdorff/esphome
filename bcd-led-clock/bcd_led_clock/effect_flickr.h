@@ -19,8 +19,9 @@ class EffectFlicker : public Effect {
     /**
      * Flicker effect: Pixel recolor method.
      */
-    Color recolorPixel(esphome::light::AddressableLight &lights, int ledStripPosition, Color &color) override {
+    Color recolorPixel(esphome::light::AddressableLight &lights, MatrixPixel &matrixPixel) override {
         // The below code will "shimmer", sort of.
+        Color color = matrixPixel.color;
         Color effectColor = color;
         // Vary the color between (255-flickerSize) and 255
         int subcolor = (255 - flickerSize) + (rand() % flickerSize);
