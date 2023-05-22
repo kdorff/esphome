@@ -9,8 +9,12 @@
 class EffectBleed : public Effect {
     public:
     double bleedRedFactor = 0.3;
-    double bleedGreenFactor = 0.4;
-    double bleedBlueFactor = 0.5;
+    double bleedGreenFactor = 0.3;
+    double bleedBlueFactor = 0.4;
+
+    EffectBleed() {
+        name = "Bleed";
+    }
 
     Color selectBleedColor(std::vector<PixelPosition> consider) {
         for (PixelPosition pp : consider) {
@@ -31,7 +35,7 @@ class EffectBleed : public Effect {
     /**
      * Bleed effect: Post method.
      */
-    std::vector<PixelPosition> post(esphome::light::AddressableLight &lights, std::vector<bool> &pixelsSet) {
+    std::vector<PixelPosition> post(esphome::light::AddressableLight &lights, std::vector<bool> &pixelsSet) override {
         std::vector<PixelPosition> bleedPixels;
         for (int i = 0; i < NUM_ROWS * NUM_COLUMNS; i++) {
             if (!pixelsSet[i]) {

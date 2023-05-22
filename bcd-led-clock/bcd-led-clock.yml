@@ -68,9 +68,10 @@ light:
           lambda: |-
             if (initial_run) {
               initialize(it);
-              effectFlicker.enabled = true;
+              effectFlicker.enabled = false;
               effectBleed.enabled = true;
             }
+
             // Get the current time
             int hour = id(homeassistant_time).now().hour % 12;
             if (hour == 0) {

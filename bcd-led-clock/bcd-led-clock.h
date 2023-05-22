@@ -28,9 +28,7 @@ EffectBleed effectBleed;
 EffectFlicker effectFlicker;
 
 /**
- * TODO: Why doesn't this work?
- * TODO: I've tried making it std::vector<Effect>, too. 
- * TODO: I'm not yet sure how to do this in C++.
+ * List of all possible effects.
  */
 std::vector<Effect*> allEffects = {
     &effectFlicker,
@@ -98,17 +96,11 @@ void startDrawTime(esphome::light::AddressableLight &lights) {
     for (int i = 0; i < NUM_ROWS * NUM_COLUMNS; i++) {
         pixelsSet[i] = false;
     }
-    // TODO: Why doesn't this work?
-    // for (Effect *effect : allEffects) {
-    //     if (effect->enabled) {
-    //         effect->pre(lights);
-    //     }
-    // }
-    if (effectBleed.enabled) {
-        effectBleed.pre(lights);
-    }
-    if (effectFlicker.enabled) {
-        effectFlicker.pre(lights);
+    for (auto effect : allEffects) {
+        // ESP_LOGD("startDrawTime", "n=%s e=%d", effect->name.c_str(), effect->enabled);
+        if (effect->enabled) {
+            effect->pre(lights);
+        }
     }
 }
 
@@ -121,17 +113,11 @@ void setBCDLEDs(esphome::light::AddressableLight &lights, std::bitset<4> &bits, 
             int ledStripPosition = ledStripColumn[i];
             Color drawColor = color;
 
-            // TODO: Why doesn't this work?
-            // for (Effect *effect : allEffects) {
-            //     if (effect->enabled) {
-            //         drawColor = effect->recolorPixel(lights, ledStripPosition, color);
-            //     }
-            // }
-            if (effectBleed.enabled) {
-                drawColor = effectBleed.recolorPixel(lights, ledStripPosition, color);
-            }
-            if (effectFlicker.enabled) {
-                drawColor = effectFlicker.recolorPixel(lights, ledStripPosition, color);
+            for (auto effect : allEffects) {
+                if (effect->enabled) {
+                    // ESP_LOGD("setBCDLEDs", "n=%s e=%d", effect->name.c_str(), effect->enabled);
+                    drawColor = effect->recolorPixel(lights, ledStripPosition, drawColor);
+                }
             }
             setPixel(lights, ledStripPosition, drawColor);
         }
@@ -159,19 +145,11 @@ void setLEDGroup(
  * Complete drawing time.
  */
 void endDrawTime(esphome::light::AddressableLight &lights) {
-    // TODO: Why doesn't this work?
-    // for (Effect *effect : allEffects) {
-    //     if (effect->enabled) {
-    //         std::vector<PixelPosition> changedPixels = effect->post(lights, pixelsSet);
-    //         setPixels(lights, changedPixels);
-    //     }
-    // }
-    if (effectBleed.enabled) {
-        std::vector<PixelPosition> changedPixels = effectBleed.post(lights, pixelsSet);
-        setPixels(lights, changedPixels);
-    }
-    if (effectFlicker.enabled) {
-        std::vector<PixelPosition> changedPixels = effectFlicker.post(lights, pixelsSet);
-        setPixels(lights, changedPixels);
+    for (auto effect : allEffects) {
+        if (effect->enabled) {
+            std::vector<PixelPosition> changedPixels = effect->post(lights, pixelsSet);
+            // ESP_LOGD("endDrawTime", "n=%s e=%d changed=%d", effect->name.c_str(), effect->enabled, changedPixels.size());
+            setPixels(lights, changedPixels);
+        }
     }
 }

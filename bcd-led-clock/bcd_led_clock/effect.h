@@ -9,17 +9,18 @@
 class Effect {
     public:
     bool enabled = false;
+    std::string name = "Effect";
 
-    void pre(esphome::light::AddressableLight &lights) {
+    virtual void pre(esphome::light::AddressableLight &lights) {
         // NOP    
     }
 
-    Color recolorPixel(esphome::light::AddressableLight &lights, int ledStripPosition, Color &color) {
+    virtual Color recolorPixel(esphome::light::AddressableLight &lights, int ledStripPosition, Color &color) {
         // NOP
         return color;
     }
 
-    std::vector<PixelPosition> post(esphome::light::AddressableLight &lights, std::vector<bool> &pixelsSet) {
+    virtual std::vector<PixelPosition> post(esphome::light::AddressableLight &lights, std::vector<bool> &pixelsSet) {
         return std::vector<PixelPosition>();
     }
 
