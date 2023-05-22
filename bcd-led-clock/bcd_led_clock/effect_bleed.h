@@ -37,19 +37,21 @@ class EffectBleed : public Effect {
      */
     std::vector<PixelPosition> post(esphome::light::AddressableLight &lights, std::vector<bool> &pixelsSet) override {
         std::vector<PixelPosition> bleedPixels;
-        for (int i = 0; i < NUM_ROWS * NUM_COLUMNS; i++) {
-            if (!pixelsSet[i]) {
-                PixelPosition base = PixelPosition(i);
-                // Find the bleed color considering the adjacent pixels.
-                std::vector<PixelPosition> pixelPositionsToConsider = {
-                    PixelPosition(lights, base.row + 1, base.column),
-                    PixelPosition(lights, base.row - 1, base.column),
-                    PixelPosition(lights, base.row, base.column - 1),
-                    PixelPosition(lights, base.row, base.column + 1),
-                };
-                base.color = selectBleedColor(pixelPositionsToConsider);
-                if ((base.color.red + base.color.green + base.color.blue) != 0) {
-                    bleedPixels.push_back(base);
+        for (int c = 0; c < NUM_COLUMNS; c++) {
+            for (int r = 0; r < NUM_ROWS; r++) {
+                PixelPosition base = PixelPosition(r, c);
+                if (!pixelsSet[base.position]) {
+                    // Find the bleed color considering the adjacent pixels.
+                    std::vector<PixelPosition> pixelPositionsToConsider = {
+                        PixelPosition(lights, base.row + 1, base.column),
+                        PixelPosition(lights, base.row - 1, base.column),
+                        PixelPosition(lights, base.row, base.column - 1),
+                        PixelPosition(lights, base.row, base.column + 1),
+                    };
+                    base.color = selectBleedColor(pixelPositionsToConsider);
+                    if ((base.color.red + base.color.green + base.color.blue) != 0) {
+                        bleedPixels.push_back(base);
+                    }
                 }
             }
         }
