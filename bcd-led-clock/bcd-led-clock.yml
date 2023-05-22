@@ -10,7 +10,7 @@ esphome:
           id: bcd_led_strip
           effect:  Rainbow
           state: On
-          brightness: 70%
+          brightness: 50%
 
 esp32:
   board: esp32dev
@@ -42,7 +42,7 @@ captive_portal:
 # Pull time from Home Assistant
 time:
   - platform: homeassistant
-    id: homeassistant_time
+    id: ha_time
     on_time_sync:
       then:
         # Once we have time sync, turn on the strip and set the effect.
@@ -73,12 +73,12 @@ light:
             }
 
             // Get the current time
-            int hour = id(homeassistant_time).now().hour % 12;
+            int hour = id(ha_time).now().hour % 12;
             if (hour == 0) {
               hour = 12;
             }
-            int minutes = id(homeassistant_time).now().minute;
-            int seconds = id(homeassistant_time).now().second;
+            int minutes = id(ha_time).now().minute;
+            int seconds = id(ha_time).now().second;
 
             // Set a specific time for testing
             // hour = 12;

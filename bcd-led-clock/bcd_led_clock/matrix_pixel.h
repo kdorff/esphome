@@ -2,11 +2,10 @@
 #define MATRIX_PIXEL_H
 
 /**
- * Class expects the matrix is wired row-wise in a serpentine fasion. 
- * Class to represent a pixel position, either defined by
- * (led position (index)) or (row, column). Once defined, you can use either 
- * the (position) or (row, column) interchangably.
- * Can optionally can hold a Color.
+ * Represent a pixel on an LED Matrix. Always stores position and
+ * (row, column). Can optionally store Color.
+ * The code expects the matrix is wired row-wise in a serpentine fasion
+ * such that pixel 0 is the lower-left (r=0, c=0);
  */
 class MatrixPixel {
     public:
@@ -17,7 +16,7 @@ class MatrixPixel {
     Color color;
 
     /**
-     * Find the column for a position.
+     * Find the row for a position.
      */
     static int rowForPosition(int position) {
         return (int) floor(position / NUM_COLUMNS);
@@ -61,13 +60,18 @@ class MatrixPixel {
         }
     }
 
-    MatrixPixel(esphome::light::AddressableLight &lights, int position_) {     // Constructor
+    /**
+     * Constructor.
+     * Create a MatrixPixel based on a known led position (linear) AND obtain the color.
+     * The row and column will be calculated.
+     */
+    MatrixPixel(esphome::light::AddressableLight &strip, int position_) {     // Constructor
         position = position_;
         onMatrix = (position >= 0) && (position < (NUM_ROWS * NUM_COLUMNS));
         if (onMatrix) {
             row = rowForPosition(position);
             column = columnForPosition(row, position);
-            color = lights[position].get();
+            color = strip[position].get();
             // ESP_LOGD("MatrixPixel for position", "p=%d -> (r=%d, c=%d)", position, row, column);
         }
     }
@@ -87,13 +91,18 @@ class MatrixPixel {
         }
     }
 
-    MatrixPixel(esphome::light::AddressableLight &lights, int row_, int column_) {     // Constructor
+    /**
+     * Constructor.
+     * Create a MatrixPixel based on a known row and column AND obtain the color.
+     * The (linear) position will be calculated.
+     */
+    MatrixPixel(esphome::light::AddressableLight &strip, int row_, int column_) {     // Constructor
         row = row_;
         column = column_;
         onMatrix = (row >= 0 && row < NUM_ROWS && column >= 0 && column < NUM_COLUMNS);
         if (onMatrix) {
             position = positionForRowAndColumn(row, column);
-            color = lights[position].get();
+            color = strip[position].get();
             // ESP_LOGD("MatrixPixel for (r,c)", "(r=%d, c=%d) -> p=%d", row, column, position);
         }
     }

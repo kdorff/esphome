@@ -7,19 +7,25 @@
  * Flicker effect. Works better with a higher refresh rate, such as 100ms.
  */
 class EffectFlicker : public Effect {
-    private:
-
     public:
+    /**
+     * Tunable paratmers to control how much to flicker.
+     * A larger value flicker more.
+     */
     int flickerSize = 30;
 
+    /**
+     * Constructor.
+     */
     EffectFlicker() {
         name = "Flicker";
     }
 
     /**
-     * Flicker effect: Pixel recolor method.
+     * Effect code to execute as a pixel is being drawn. This provides an option to
+     * return a new, alternative Color for that pixel, if desired.
      */
-    Color recolorPixel(esphome::light::AddressableLight &lights, MatrixPixel &matrixPixel) override {
+    Color recolorPixel(esphome::light::AddressableLight &strip, MatrixPixel &matrixPixel) override {
         // The below code will "shimmer", sort of.
         Color color = matrixPixel.color;
         Color effectColor = color;

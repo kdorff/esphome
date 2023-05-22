@@ -4,31 +4,42 @@
 #include "matrix_pixel.h"
 
 /**
- * Base Effect and including utility methods.
+ * Base Effect class with utility methods.
  */
 class Effect {
     public:
     bool enabled = false;
     std::string name = "Effect";
 
-    virtual void pre(esphome::light::AddressableLight &lights) {
+    /**
+     * Effect code to execute before the matrix is drawn.
+     */
+    virtual void pre(esphome::light::AddressableLight &strip) {
         // NOP    
     }
 
-    virtual Color recolorPixel(esphome::light::AddressableLight &lights, MatrixPixel &matrixPixel) {
+    /**
+     * Effect code to execute as a pixel is being drawn. This provides an option to
+     * return a new, alternative Color for that pixel, if desired.
+     */
+    virtual Color recolorPixel(esphome::light::AddressableLight &strip, MatrixPixel &matrixPixel) {
         // NOP
         return matrixPixel.color;
     }
 
-    virtual std::vector<MatrixPixel> post(esphome::light::AddressableLight &lights, std::vector<bool> &pixelsSet) {
+    /**
+     * Effect code to execute after the matrix has been drawn,
+     * in case the Effect wants to make more changes.
+     */
+    virtual std::vector<MatrixPixel> post(esphome::light::AddressableLight &strip, std::vector<bool> &pixelsSet) {
         return std::vector<MatrixPixel>();
     }
 
     /**
-      * Given the list of matrixPixels on lights, return a Color that is
-      * the average of pixels colors.
+      * Given the vector of MatrixPixel, return a Color that is
+      * the average of the MatrixPixel colors.
       */
-    static Color averageColors(esphome::light::AddressableLight &lights, std::vector<MatrixPixel> &matrixPixels) {
+    static Color averageColors(esphome::light::AddressableLight &strip, std::vector<MatrixPixel> &matrixPixels) {
         int count = 0;
         int redSum = 0;
         int greenSum = 0;
@@ -36,7 +47,7 @@ class Effect {
         for (MatrixPixel mp : matrixPixels) {
             if (mp.onMatrix) {
                 // Only observe MatrixPixels that landed on the LED matrix.
-                Color color = lights[mp.position].get();
+                Color color = strip[mp.position].get();
                 count++;
                 redSum += color.red;
                 greenSum += color.green;
