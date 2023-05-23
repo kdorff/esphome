@@ -1,0 +1,198 @@
+esphome:
+  name: moisture-1
+  platform: ESP32
+  board: esp32dev
+  on_boot:
+    then:
+      - script.execute: consider_deep_sleep
+
+# Enable logging
+#logger:
+
+# Enable Home Assistant API
+api:
+
+ota:
+  password: !secret ota_password
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+
+  # Enable fallback hotspot (captive portal) in case wifi connection fails
+  ap:
+    ssid: "moisture-1 Fallback Hotspot"
+    password: !secret fallback_wifi_password
+
+captive_portal:
+
+#
+# Run for 10 seconds (see delay in script)
+# Deep sleep for 1 hour
+#
+deep_sleep:
+  id: deep_sleep_control
+  sleep_duration: 1h
+
+# the ads1115 is i2c
+i2c:
+  sda: 21
+  scl: 22
+  scan: true
+
+ads1115:
+  - address: 0x48
+
+globals:
+  # Value to consider completely dry. Auto-calibrated.
+  - id: dryValue
+    type: double
+    restore_value: yes
+    initial_value: '1.8'
+  # Value to consider completely wet. Auto-calibrated.
+  - id: wetValue
+    type: double
+    restore_value: yes
+    initial_value: '1.8'
+  # Maximum battery voltage (observed). Auto-calibrated.
+  - id: batteryMax
+    type: double
+    restore_value: yes
+    initial_value: '8.1'
+  # Minimum acceptable battery voltage. NOT auto-calibrated.
+  # I'm assuming 2.75 volts as the minimum voltage for a single
+  # cell. I'm using two cells in series, so I assume a 5.5v
+  # minimum voltage (reporting 0% to HA).
+  - id: batteryMin
+    type: double
+    restore_value: yes
+    initial_value: '6.7'
+  #
+  # We are using a voltage divider to reduce the voltage from the
+  # two 18650 cells down into a range the ADS1115 can read.
+  # This is the factor to multiply to get back to (approximate)
+  # actual voltage.
+  #
+  - id: voltageFactor
+    type: double
+    restore_value: yes
+    initial_value: '3.2'
+
+sensor:
+  - platform: ads1115
+    multiplexer: 'A0_GND'
+    # Providing 3.3v to the ADC so selecting the 4.096 gain
+    gain: 4.096
+    name: "moisture_1_s0"
+    update_interval: 3s
+    unit_of_measurement: "%"
+    filters:
+      - lambda: !lambda |-
+          if (id(dryValue) < x) {
+            // Auto-calibrate dryValue
+            id(dryValue) = x;
+          }
+          if (id(wetValue) > x) {
+          // Auto-calibrate wetValue
+            id(wetValue) = x;
+          }
+          // Scale x: dryValue->wetValue, 0->100
+          return (x - id(dryValue)) * (100 - 0) / (id(wetValue) - id(dryValue)) + 0;
+  - platform: ads1115
+    multiplexer: 'A1_GND'
+    # Providing 3.3v to the ADC so selecting the 4.096 gain
+    gain: 4.096
+    name: "moisture_1_s1"
+    update_interval: 3s
+    unit_of_measurement: "%"
+    filters:
+      - lambda: !lambda |-
+          if (id(dryValue) < x) {
+            // Auto-calibrate dryValue
+            id(dryValue) = x;
+          }
+          if (id(wetValue) > x) {
+          // Auto-calibrate wetValue
+            id(wetValue) = x;
+          }
+          // Scale x: dryValue->wetValue, 0->100
+          return (x - id(dryValue)) * (100 - 0) / (id(wetValue) - id(dryValue)) + 0;
+  - platform: ads1115
+    multiplexer: 'A2_GND'
+    # Providing 3.3v to the ADC so selecting the 4.096 gain
+    gain: 4.096
+    name: "moisture_1_s2"
+    update_interval: 3s
+    unit_of_measurement: "%"
+    filters:
+      - lambda: !lambda |-
+          if (id(dryValue) < x) {
+            // Auto-calibrate dryValue
+            id(dryValue) = x;
+          }
+          if (id(wetValue) > x) {
+          // Auto-calibrate wetValue
+            id(wetValue) = x;
+          }
+          // Scale x: dryValue->wetValue, 0->100
+          return (x - id(dryValue)) * (100 - 0) / (id(wetValue) - id(dryValue)) + 0;
+  #
+  # The device is being powered by a pair of 18650
+  # with a maximum voltage of about 8.2 volts?
+  # I use a ~1/3 voltage divider to bring the votage down into
+  # the range the ADS1115 can handle with a 3.3v reference.
+  # See the global named voltageFactor.
+  #
+  - platform: ads1115
+    multiplexer: 'A3_GND'
+    # Providing 3.3v to the ADC so selecting the 4.096 gain
+    gain: 4.096
+    name: "moisture_1_battery"
+    update_interval: 3s
+    filters:
+      - lambda: !lambda |-
+          return x * id(voltageFactor);
+  - platform: ads1115
+    multiplexer: 'A3_GND'
+    # Providing 3.3v to the ADC so selecting the 4.096 gain
+    gain: 4.096
+    name: "moisture_1_battery_percent"
+    unit_of_measurement: "%"
+    update_interval: 3s
+    filters:
+      - lambda: !lambda |-
+          double v = x * id(voltageFactor);
+          if (v > id(batteryMax)) {
+            // Auto-calibrate maximum voltage
+            id(batteryMax) = v;
+          }
+          return (v - id(batteryMin)) * (100 - 0) / (id(batteryMax) - id(batteryMin)) + 0;
+
+# Sensor in Home Automation that we are using to 
+# stop Deep Sleep so we can watch the logs or
+# perform OTA.
+binary_sensor:
+  - platform: homeassistant
+    id: prevent_deep_sleep
+    entity_id: input_boolean.prevent_deep_sleep
+
+# Every 15 this script seconds check if "Prevent Deep Sleep" 
+# isn't "On", go to deep sleep sleep.
+# During that 15 seconds normal operations occur including
+# sending sensor data. 
+# If this time is too small. prevent_deep_sleep won't 
+# necessarily be updated and data may not be sampled/sent.
+script:
+  - id: consider_deep_sleep
+    mode: queued
+    then:
+      - delay: 15s
+      - if:
+          condition:
+            binary_sensor.is_on: prevent_deep_sleep
+          then:
+            - logger.log: "Staying awaky because Prevent Deep Sleep is on."
+          else:
+            - logger.log: "Taking a nap."
+            - deep_sleep.enter: deep_sleep_control
+      - script.execute: consider_deep_sleep
