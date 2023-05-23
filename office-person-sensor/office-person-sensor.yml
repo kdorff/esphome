@@ -13,6 +13,7 @@ esphome:
   friendly_name: "Office Person Sensor"
   includes:
     - person_sensor/person_sensor.h
+    - data-smoothing.h
   libraries:
     Wire
   on_boot:
@@ -87,14 +88,30 @@ sensor:
         // Look for a face appearing or disappearing
         // THIS is the how we control binary_sensor.office_person_sensor
         //
-        int maxConfidence = 0;
+        int maxConfidence = -1;
         for (int i = 0; i < results.num_faces; ++i) {
           const person_sensor_face_t* face = &results.faces[i];
           if (face->box_confidence > maxConfidence) {
             maxConfidence = face->box_confidence;
           }
         }
-        if (results.num_faces >= 1 && maxConfidence >= 90) {
+
+        // Use data smoothing to reduce false positives and negatives.
+        // int sampleValue = results.num_faces > 0 ? maxConfidence : 0;
+        // int faceFoundLikely = observeSample(sampleValue);
+        // bool faceFound = faceFoundLikely > 60 ? true : false;
+
+        // Report on data smoothing
+        // ESP_LOGD("person_sensor_loop", "Data smoothing observeSample(%d)=%d", sampleValue, faceFoundLikely);
+        // if (!faceFound && maxConfidence > -1) {
+        //   ESP_LOGD("person_sensor_loop", "Data smoothing suggests someone isn't really there.");
+        // }
+        // if (faceFound && maxConfidence == -1) {
+        //   // Value was smoothed to "1". Let's have some false confidence.
+        //   ESP_LOGD("person_sensor_loop", "Data smoothing suggests someone may still be there.");
+        // }
+
+        if (results.num_faces > 0 && maxConfidence >= 85) {
           // Person detected with at least 90% confience.
           // We'll consider this an actual face.
           // At less than 90% we'll call it a false positive.
