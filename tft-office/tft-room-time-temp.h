@@ -8,7 +8,7 @@ int pageNumber = 0;
 DisplayPanel* lastTouchedPanel = NULL;
 
 // The display/lcd we are working with. Defined in initializePanels().
-esphome::display::DisplayBuffer* lcd = NULL;
+esphome::display::Display* lcd = NULL;
 
 // For sprintf calls.
 char buffer[25];
@@ -87,7 +87,7 @@ std::vector<std::string> outdoorLabelText = {"outside"};
 std::vector<std::string> blankText = {};
 
 // One time, initialize the Panels
-void initializePanels(esphome::display::DisplayBuffer &display) {
+void initializePanels(esphome::display::Display &display) {
     lcd = &display;
 
     timePanel.font = font_time;
@@ -165,7 +165,7 @@ void initializePanels(esphome::display::DisplayBuffer &display) {
 }
 
 // The time until which to display flash
-esphome::time::ESPTime flashUntil;
+esphome::ESPTime flashUntil;
 
 // Enable the Flash message with some specific text
 void enableFlash(std::vector<std::string> flashText) {

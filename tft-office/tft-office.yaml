@@ -38,7 +38,7 @@ esphome:
     - tft-room-time-temp.h
     # - display-panel-dev.h
   libraries:
-    esphome-display-panel=https://github.com/kdorff/esphome-display-panel.git#v0.0.13
+    esphome-display-panel=https://github.com/kdorff/esphome-display-panel.git#v0.0.14
 
 esp32:
   board: esp32dev

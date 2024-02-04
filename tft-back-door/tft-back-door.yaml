@@ -7,7 +7,7 @@ esphome:
   includes:
     - tft-door-monitor.h
   libraries:
-    - esphome-display-panel=https://github.com/kdorff/esphome-display-panel.git#v0.0.13
+    esphome-display-panel=https://github.com/kdorff/esphome-display-panel.git#v0.0.14
 
 esp32:
   board: esp32dev
@@ -117,7 +117,7 @@ touchscreen:
   platform: xpt2046
   id: touch
   cs_pin: 32
-  interrupt_pin: 21
+  # interrupt_pin: 21
   swap_x_y: false
   ##
   ## From running calibration (code is commented out, below)

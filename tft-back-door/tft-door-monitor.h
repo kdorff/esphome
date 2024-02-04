@@ -4,7 +4,7 @@
 DisplayPanel* lastTouchedPanel = NULL;
 
 // The display/lcd we are working with. Defined in initializePanels().
-esphome::display::DisplayBuffer* lcd = NULL;
+esphome::display::Display* lcd = NULL;
 
 // For sprintf calls.
 char buffer[25];
@@ -41,7 +41,7 @@ std::vector<std::string> frontDoorText = {"Front", "Door"};
 std::vector<std::string> brightnessUpText = {"+"};
 std::vector<std::string> brightnessDownText = {"-"};
 
-void initializePanels(esphome::display::DisplayBuffer &display) {
+void initializePanels(esphome::display::Display &display) {
     lcd = &display;
 
     backDoorPanel.font = font_door;

@@ -1,7 +1,7 @@
 #include <display-panel.h>
 
 // The display/lcd we are working with. Defined in initializePanels().
-esphome::display::DisplayBuffer* lcd = NULL;
+esphome::display::Display* lcd = NULL;
 
 // For sprintf calls.
 char buffer[25];
@@ -44,7 +44,7 @@ std::vector<std::string> insideLabelText = {"room"};
 std::vector<std::string> outdoorLabelText = {"outside"};
 std::vector<std::string> blankText = {};
 
-void initializePanels(esphome::display::DisplayBuffer &display) {
+void initializePanels(esphome::display::Display &display) {
     lcd = &display;
 
     timePanel.font = font_time;
