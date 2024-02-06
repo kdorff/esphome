@@ -168,25 +168,23 @@ touchscreen:
   # ResinChem Tech found using interrupt_pin to be unreliable. While
   # I didn't have these issues, I find it works fine without it.
   #interrupt_pin: 21
-  swap_x_y: false
   calibration_x_min: 426
   calibration_x_max: 3771
   calibration_y_min: 3845
   calibration_y_max: 471
   threshold: 400
   update_interval: 50ms
-  report_interval: 200ms
   on_touch:
     then:
       - lambda: |-
           // This can be used to help calibrate the device.
           // See https://esphome.io/components/touchscreen/xpt2046.html#calibration
           ESP_LOGD("yaml", "touched (x=%d, y=%d), (x_raw=%d, y_raw=%d)", 
-            id(touchid).x, id(touchid).y, id(touchid).x_raw, id(touchid).y_raw);
+            touch.x, touch.y, touch.x_raw, touch.y_raw);
       - if:
           condition:
             lambda: |-
-              return isPanelTouched(id(touchid).x, id(touchid).y);
+              return isPanelTouched(touch.x, touch.y);
           then:
             - lambda: |-
                 ESP_LOGD("yaml", "touched name=%s", (lastTouchedPanel->name.c_str()));
