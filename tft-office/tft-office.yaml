@@ -35,7 +35,7 @@
 esphome:
   name: tft-office
   includes:
-    - tft-room-time-temp.h
+    - tft-room-time-temp-wind.h
     # - display-panel-dev.h
   libraries:
     esphome-display-panel=https://github.com/kdorff/esphome-display-panel.git#v0.0.14
@@ -217,12 +217,6 @@ output:
     pin: 17
     id: backlight
 
-text_sensor:
-  - platform: template
-    name: "tft-office Boot Timestamp"
-    id: boot_timestamp
-    icon: mdi:clock-start
-
 time:
   - platform: homeassistant
     id: esptime
@@ -237,6 +231,15 @@ time:
               id(boot_timestamp).publish_state(buffer);
             }
 
+text_sensor:
+  - platform: template
+    name: "tft-office Boot Timestamp"
+    id: boot_timestamp
+    icon: mdi:clock-start
+  - platform: homeassistant
+    id: wind_direction
+    entity_id: sensor.weather_wind_dir
+
 sensor:
   - platform: homeassistant
     id: back_yard_temperature
@@ -244,3 +247,9 @@ sensor:
   - platform: homeassistant
     id: inside_temperature
     entity_id: sensor.office_sensor_temperature
+  - platform: homeassistant
+    id: wind_speed
+    entity_id: sensor.openweathermap_wind_speed
+  - platform: homeassistant
+    id: wind_gust_speed
+    entity_id: sensor.openweathermap_wind_gust_speed
