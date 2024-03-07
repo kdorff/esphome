@@ -34,6 +34,7 @@ wifi:
     ssid: "tft-back-door Fallback Hotspot"
     password: !secret fallback_wifi_password
 
+# Save memory. Disable captive portal.
 # captive_portal:
 
 color:
@@ -115,10 +116,9 @@ touchscreen:
   ## This is likely more responsive if I add T_IRQ
   ##
   platform: xpt2046
-  id: touch
+  id: touchid
   cs_pin: 32
   # interrupt_pin: 21
-  swap_x_y: false
   ##
   ## From running calibration (code is commented out, below)
   ## for rotation: 0 these were good
@@ -130,13 +130,12 @@ touchscreen:
   ## Help eliminate phantom presses
   threshold: 400
   update_interval: 50ms
-  report_interval: 1s
   on_touch:
     then:
       - if:
           condition:
             lambda: |-
-              return isPanelTouched((id(touch)).x, (id(touch)).y);
+              return isPanelTouched(touch.x, touch.y);
           then:
             - lambda: |-
                 ESP_LOGD("yaml", "touched name=%s", (lastTouchedPanel->name.c_str()));
