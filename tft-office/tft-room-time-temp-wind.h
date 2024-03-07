@@ -198,7 +198,7 @@ void updatePanelStates() {
         std::stringstream ss;
         ss << "Wind " << value_accuracy_to_string(wind_speed->state, 0);
         if (wind_gust_speed->has_state()) {
-            ss << "-" << value_accuracy_to_string(wind_gust_speed->state, 0);
+            ss << "+";
         }
         if (wind_direction->has_state()) {
             ss << " " << wind_direction->state.c_str();
