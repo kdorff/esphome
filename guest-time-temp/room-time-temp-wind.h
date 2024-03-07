@@ -1,3 +1,4 @@
+#include <sstream>
 #include <display-panel.h>
 
 // The display/lcd we are working with. Defined in initializePanels().
@@ -95,16 +96,25 @@ void updatePanelStates() {
         sprintf(buffer, "%s", next_alarm->state.c_str());
         std::vector<std::string> alarmText = { buffer };
         alarmPanel.text = alarmText;
-        // ESP_LOGD("update", "next_alarm=%s", next_alarm->state.c_str());
     }
     else {
-        std::string dayName = now.strftime("%A");
-        std::vector<std::string> dayText = { dayName };
-        alarmPanel.text = dayText;
+        if (wind_speed->has_state() && wind_speed->state < 200) {
+            std::stringstream ss;
+            ss << "Wind " << value_accuracy_to_string(wind_speed->state, 0);
+            if (wind_gust_speed->has_state()) {
+                ss << "-" << value_accuracy_to_string(wind_gust_speed->state, 0);
+            }
+            if (wind_direction->has_state()) {
+                ss << " " << wind_direction->state.c_str();
+            }
+            alarmPanel.text = { ss.str() };
+        }
+        else {
+            alarmPanel.text = { "" };
+        }
     }
-
     // Date
-    std::string monthName = now.strftime("%b");
+    std::string monthName = now.strftime("%a/%b");
     sprintf(buffer, "%s %d", monthName.c_str(), now.day_of_month);
     std::vector<std::string> dateText = { buffer };
     datePanel.text = dateText;

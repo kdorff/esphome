@@ -5,7 +5,7 @@
 esphome:
   name: guest-time-temp-esp32
   includes:
-    - room-time-temp.h
+    - room-time-temp-wind.h
   libraries:
     esphome-display-panel=https://github.com/kdorff/esphome-display-panel.git#v0.0.14
 
@@ -34,10 +34,11 @@ wifi:
     ssid: "guest-time-temp Fallback Hotspot"
     password: !secret fallback_wifi_password
 
-captive_portal:
+# Save memory. Disable captive portal.
+# captive_portal:
 
-bluetooth_proxy:
-  active: true
+# bluetooth_proxy:
+#   active: true
 
 i2c:
   frequency: 800kHz
@@ -59,7 +60,7 @@ font:
     size: 12
   - file: "gfonts://Rubik@700"
     id: font_date
-    size: 16
+    size: 15
   - file: "gfonts://Rubik@700"
     id: font_temp
     size: 22
@@ -83,26 +84,6 @@ display:
       updatePanelStates();
       drawPanels();
 
-sensor:
-  ##
-  ## HA sensors we need to do our work.
-  ##
-  - platform: homeassistant
-    id: back_yard_temperature
-    entity_id: sensor.back_yard_sensor_temperature
-  - platform: homeassistant
-    id: inside_temperature
-    entity_id: sensor.guest_bedroom_ecobee_sensor_temperature
-
-text_sensor:
-  - platform: homeassistant
-    id: next_alarm
-    entity_id: sensor.guest_bedroom_next_alarm_str
-  - platform: template
-    name: "guest-time-temp-esp32 Boot Time"
-    id: guest_time_temp_esp32_boot_time
-    icon: mdi:clock-start
-
 time:
   - platform: homeassistant
     id: esptime
@@ -117,3 +98,32 @@ time:
               id(guest_time_temp_esp32_boot_time).publish_state(buffer);
               bootTimeSet = true;
             }
+
+text_sensor:
+  - platform: homeassistant
+    id: next_alarm
+    entity_id: sensor.guest_bedroom_next_alarm_str
+  - platform: template
+    name: "guest-time-temp-esp32 Boot Time"
+    id: guest_time_temp_esp32_boot_time
+    icon: mdi:clock-start
+  - platform: homeassistant
+    id: wind_direction
+    entity_id: sensor.weather_wind_dir
+
+sensor:
+  ##
+  ## HA sensors we need to do our work.
+  ##
+  - platform: homeassistant
+    id: back_yard_temperature
+    entity_id: sensor.back_yard_sensor_temperature
+  - platform: homeassistant
+    id: inside_temperature
+    entity_id: sensor.guest_bedroom_ecobee_sensor_temperature
+  - platform: homeassistant
+    id: wind_speed
+    entity_id: sensor.openweathermap_wind_speed
+  - platform: homeassistant
+    id: wind_gust_speed
+    entity_id: sensor.openweathermap_wind_gust_speed
